@@ -21,13 +21,13 @@ export default async function BudgetsPage(
   }
 ) {
   const searchParams = await props.searchParams;
-  
+
   // Default to current month YYYY-MM
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  
+
   const selectedMonth = typeof searchParams?.month === "string" ? searchParams.month : currentMonth;
-  
+
   // Calculate prev/next months for navigation
   const [year, month] = selectedMonth.split('-').map(Number);
   const prevMonthDate = new Date(year, month - 2, 1);
@@ -42,12 +42,12 @@ export default async function BudgetsPage(
     getCategories(),
     getUserSettings(),
   ]);
-  
+
   const currency = userSettings?.currency || "USD";
   const { budgets, summary } = budgetData;
 
-  const totalPercent = summary.totalBudget > 0 
-    ? Math.min(Math.round((summary.totalSpent / summary.totalBudget) * 100), 100) 
+  const totalPercent = summary.totalBudget > 0
+    ? Math.min(Math.round((summary.totalSpent / summary.totalBudget) * 100), 100)
     : 0;
 
   return (
@@ -75,7 +75,7 @@ export default async function BudgetsPage(
       </div>
 
       <div className="flex items-center justify-between bg-white dark:bg-gray-950 p-2 rounded-lg border shadow-sm w-full md:w-auto md:inline-flex mb-4">
-        <Link 
+        <Link
           href={`/dashboard/budgets?month=${prevMonthStr}`}
           className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
         >
@@ -84,7 +84,7 @@ export default async function BudgetsPage(
         <span className="font-medium px-4 min-w-[140px] text-center">
           {monthDisplay}
         </span>
-        <Link 
+        <Link
           href={`/dashboard/budgets?month=${nextMonthStr}`}
           className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
         >
@@ -93,7 +93,7 @@ export default async function BudgetsPage(
       </div>
 
       <div className="grid gap-4 md:grid-cols-3 mb-8">
-        <Card className="border-none shadow-sm bg-gradient-to-br from-indigo-500 to-indigo-600 text-white">
+        <Card className="border-none shadow-sm bg-linear-to-br from-indigo-500 to-indigo-600 text-white">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-indigo-100">Total Budget</CardTitle>
           </CardHeader>
@@ -101,7 +101,7 @@ export default async function BudgetsPage(
             <div className="text-3xl font-bold">{formatCurrency(summary.totalBudget, currency)}</div>
           </CardContent>
         </Card>
-        
+
         <Card className="border-none shadow-sm bg-white dark:bg-gray-950">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Spent</CardTitle>

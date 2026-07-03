@@ -14,7 +14,7 @@ export const metadata = {
 
 export default async function DashboardPage() {
   const session = await auth();
-  
+
   // Fetch the dashboard data
   const { totalIncome, totalExpense, balance, recentTransactions, chartData, currency } = await getDashboardData();
 
@@ -30,21 +30,21 @@ export default async function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center space-x-2">
-          <Link 
-            href="/dashboard/transactions" 
+          <Link
+            href="/dashboard/transactions"
             className={buttonVariants({ className: "rounded-full shadow-sm bg-blue-600 hover:bg-blue-700 text-white" })}
           >
             <Plus className="mr-2 h-4 w-4" /> Add Transaction
           </Link>
         </div>
       </div>
-      
+
       {/* 1. Summary Cards */}
-      <SummaryCards 
-        balance={balance} 
-        totalIncome={totalIncome} 
-        totalExpense={totalExpense} 
-        currency={currency} // The currency is passed here
+      <SummaryCards
+        balance={balance}
+        totalIncome={totalIncome}
+        totalExpense={totalExpense}
+        currency={currency}
       />
 
       {/* 2. Charts and Recent Transactions Grid */}
