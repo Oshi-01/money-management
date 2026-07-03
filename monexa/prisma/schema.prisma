@@ -1,0 +1,131 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  password      String?
+  image         String?
+  currency      String    @default("USD")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  categories   Category[]
+  transactions Transaction[]
+  loans        Loan[]
+  budgets      Budget[]
+  savingsGoals SavingsGoal[]
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  userId    String?  // Nullable for default system categories
+  name      String
+  icon      String?
+  color     String?
+  type      CategoryType
+
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+  budgets   Budget[]
+
+  @@unique([userId, name, type])
+}
+
+enum CategoryType {
+  INCOME
+  EXPENSE
+}
+
+model Transaction {
+  id          String   @id @default(cuid())
+  userId      String
+  categoryId  String
+  description String
+  amount      Float
+  type        CategoryType
+  date        DateTime
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+}
+
+model Loan {
+  id              String     @id @default(cuid())
+  userId          String
+  personName      String
+  phone           String?
+  email           String?
+  loanType        LoanType
+  principalAmount Float
+  interestRate    Float?
+  balance         Float
+  startDate       DateTime
+  dueDate         DateTime?
+  status          LoanStatus @default(ACTIVE)
+  notes           String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  repayments  Repayment[]
+}
+
+enum LoanType {
+  BORROWED
+  LENT
+}
+
+enum LoanStatus {
+  ACTIVE
+  PAID
+  OVERDUE
+}
+
+model Repayment {
+  id          String   @id @default(cuid())
+  loanId      String
+  amount      Float
+  paymentDate DateTime
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  loan        Loan     @relation(fields: [loanId], references: [id], onDelete: Cascade)
+}
+
+model Budget {
+  id         String   @id @default(cuid())
+  userId     String
+  categoryId String
+  month      String   // Format: YYYY-MM
+  amount     Float
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, categoryId, month])
+}
+
+model SavingsGoal {
+  id           String    @id @default(cuid())
+  userId       String
+  title        String
+  targetAmount Float
+  savedAmount  Float     @default(0)
+  deadline     DateTime?
+
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
