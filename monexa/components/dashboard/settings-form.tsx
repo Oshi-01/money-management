@@ -4,7 +4,7 @@ import { useState } from "react";
 import { updateSettings } from "@/app/actions/settings";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, Mail, User, Coins } from "lucide-react";
 import { toast } from "sonner";
 
 interface SettingsFormProps {
@@ -39,9 +39,10 @@ export function SettingsForm({ user }: SettingsFormProps) {
         </CardDescription>
       </CardHeader>
       <form action={onSubmit}>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           <div className="space-y-2">
-            <label htmlFor="email" className="text-sm font-medium leading-none">
+            <label htmlFor="email" className="text-sm font-medium leading-none flex items-center gap-2">
+              <Mail className="h-4 w-4 text-muted-foreground" />
               Email
             </label>
             <input
@@ -49,7 +50,7 @@ export function SettingsForm({ user }: SettingsFormProps) {
               type="email"
               defaultValue={user.email}
               disabled
-              className="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm text-muted-foreground opacity-50 cursor-not-allowed"
+              className="flex h-10 w-full rounded-xl border border-input bg-muted px-3 py-2 text-sm text-muted-foreground opacity-50 cursor-not-allowed"
             />
             <p className="text-[0.8rem] text-muted-foreground">
               Your email address is used to login and cannot be changed.
@@ -57,7 +58,8 @@ export function SettingsForm({ user }: SettingsFormProps) {
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="name" className="text-sm font-medium leading-none">
+            <label htmlFor="name" className="text-sm font-medium leading-none flex items-center gap-2">
+              <User className="h-4 w-4 text-muted-foreground" />
               Name
             </label>
             <input
@@ -66,19 +68,20 @@ export function SettingsForm({ user }: SettingsFormProps) {
               type="text"
               defaultValue={user.name || ""}
               required
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             />
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="currency" className="text-sm font-medium leading-none">
+            <label htmlFor="currency" className="text-sm font-medium leading-none flex items-center gap-2">
+              <Coins className="h-4 w-4 text-muted-foreground" />
               Currency Preference
             </label>
             <select
               id="currency"
               name="currency"
               defaultValue={user.currency}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               <option value="USD">USD ($) - US Dollar</option>
               <option value="GBP">GBP (£) - British Pound</option>
@@ -90,7 +93,7 @@ export function SettingsForm({ user }: SettingsFormProps) {
           </div>
         </CardContent>
         <CardFooter className="border-t px-6 py-4">
-          <Button type="submit" disabled={isPending}>
+          <Button type="submit" disabled={isPending} className="bg-linear-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white border-none shadow-md shadow-indigo-500/20">
             {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Save changes
           </Button>

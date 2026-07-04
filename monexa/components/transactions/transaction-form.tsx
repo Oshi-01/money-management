@@ -17,6 +17,7 @@ const transactionSchema = z.object({
   amount: z.number().positive("Amount must be positive"),
   type: z.enum(["INCOME", "EXPENSE"]),
   categoryId: z.string().min(1, "Category is required"),
+  accountId: z.string().optional(),
   date: z.string().min(1, "Date is required"),
   notes: z.string().optional(),
 });
@@ -29,7 +30,12 @@ type Category = {
   type: "INCOME" | "EXPENSE";
 };
 
-export function TransactionForm({ categories, onSuccess }: { categories: Category[], onSuccess?: () => void }) {
+type Account = {
+  id: string;
+  name: string;
+};
+
+export function TransactionForm({ categories, accounts, onSuccess }: { categories: Category[], accounts?: Account[], onSuccess?: () => void }) {
   const [isPending, startTransition] = useTransition();
 
   const { register, handleSubmit, setValue, watch, formState: { errors }, reset } = useForm<TransactionFormValues>({
@@ -39,6 +45,7 @@ export function TransactionForm({ categories, onSuccess }: { categories: Categor
       type: "EXPENSE", 
       amount: 0, 
       categoryId: "", 
+      accountId: "",
       date: new Date().toISOString().split("T")[0],
       notes: ""
     },
@@ -54,6 +61,7 @@ export function TransactionForm({ categories, onSuccess }: { categories: Categor
       formData.append("amount", data.amount.toString());
       formData.append("type", data.type);
       formData.append("categoryId", data.categoryId);
+      if (data.accountId) formData.append("accountId", data.accountId);
       formData.append("date", data.date);
       if (data.notes) formData.append("notes", data.notes);
       
@@ -73,16 +81,19 @@ export function TransactionForm({ categories, onSuccess }: { categories: Categor
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label>Type</Label>
-          <Select onValueChange={(val) => {
+          <Select 
+            value={watch("type")}
+            onValueChange={(val) => {
               if (val) {
                 setValue("type", val as "INCOME" | "EXPENSE");
                 setValue("categoryId", ""); // Reset category when type changes
               }
             }} 
-            defaultValue="EXPENSE"
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select type" />
+              <SelectValue placeholder="Select type">
+                {watch("type") === "INCOME" ? "Income" : "Expense"}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="INCOME">Income</SelectItem>
@@ -94,9 +105,16 @@ export function TransactionForm({ categories, onSuccess }: { categories: Categor
 
         <div className="space-y-2">
           <Label>Category</Label>
-          <Select onValueChange={(val) => { if (val) setValue("categoryId", val) }} value={watch("categoryId") || undefined}>
+          <Select 
+            value={watch("categoryId")} 
+            onValueChange={(val) => { if (val) setValue("categoryId", val) }}
+          >
             <SelectTrigger>
-              <SelectValue placeholder="Select category" />
+              <SelectValue placeholder="Select category">
+                {watch("categoryId") 
+                  ? categories.find(c => c.id === watch("categoryId"))?.name 
+                  : "Select category"}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {filteredCategories.map(cat => (
@@ -113,6 +131,31 @@ export function TransactionForm({ categories, onSuccess }: { categories: Categor
         <Input id="description" placeholder="e.g. Salary, Groceries" {...register("description")} />
         {errors.description && <p className="text-sm text-red-500">{errors.description.message}</p>}
       </div>
+
+      {accounts && accounts.length > 0 && (
+        <div className="space-y-2">
+          <Label>Account (Optional)</Label>
+          <Select 
+            value={watch("accountId")} 
+            onValueChange={(val) => { if (val) setValue("accountId", val === "none" ? "" : val) }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select account">
+                {watch("accountId") && watch("accountId") !== "none"
+                  ? accounts.find(a => a.id === watch("accountId"))?.name 
+                  : "None"}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">None</SelectItem>
+              {accounts.map(acc => (
+                <SelectItem key={acc.id} value={acc.id}>{acc.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.accountId && <p className="text-sm text-red-500">{errors.accountId.message}</p>}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-2">

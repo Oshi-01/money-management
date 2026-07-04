@@ -1,8 +1,9 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis, ReferenceLine } from "recharts";
 import { formatCurrency } from "@/lib/utils";
+import { useState, useEffect } from "react";
 
 interface DashboardChartProps {
   data: {
@@ -14,8 +15,24 @@ interface DashboardChartProps {
 }
 
 export function DashboardChart({ data, currency }: DashboardChartProps) {
-  // Format the date for the X-axis (e.g., "Jan 12")
-  const formattedData = data.map((item) => {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <Card className="h-full border border-gray-100 shadow-sm flex flex-col rounded-xl overflow-hidden bg-white">
+        <div className="flex items-center justify-center h-[400px]">Loading...</div>
+      </Card>
+    );
+  }
+
+  // Generate placeholder data if empty
+  const isDataEmpty = data.length === 0;
+  
+  const chartData = data.map((item) => {
     const d = new Date(item.date);
     return {
       ...item,
@@ -23,81 +40,82 @@ export function DashboardChart({ data, currency }: DashboardChartProps) {
     };
   });
 
+  const totalExpense = data.reduce((acc, curr) => acc + curr.expense, 0);
+  const avgExpense = data.length > 0 ? totalExpense / data.length : 0;
+
   return (
-    <Card className="col-span-1 md:col-span-2 border-none shadow-sm flex flex-col">
-      <CardHeader>
-        <CardTitle className="text-base font-semibold">Income vs Expense</CardTitle>
-        <CardDescription>Overview of your cash flow over the last 30 days</CardDescription>
+    <Card className="h-full border border-gray-100 shadow-sm flex flex-col rounded-xl overflow-hidden bg-white relative">
+      <CardHeader className="flex flex-row items-start justify-between pb-6">
+        <div>
+          <CardTitle className="text-xl font-mono font-medium text-gray-900 flex items-center gap-2">
+            {formatCurrency(totalExpense, currency)} <span className="text-sm font-sans text-gray-500 font-normal">Spent</span>
+          </CardTitle>
+        </div>
+        <div className="flex gap-4 text-xs font-semibold text-gray-400">
+          <span className="hover:text-teal-600 cursor-pointer transition-colors">Day</span>
+          <span className="hover:text-teal-600 cursor-pointer transition-colors">Week</span>
+          <span className="text-teal-600 border-b border-teal-600 pb-1 cursor-pointer">Month</span>
+          <span className="hover:text-teal-600 cursor-pointer transition-colors">Year</span>
+        </div>
       </CardHeader>
-      <CardContent className="flex-1 pb-6 pl-0 sm:pl-6 pt-2">
-        {data.length === 0 ? (
-          <div className="flex h-[300px] w-full items-center justify-center text-sm text-muted-foreground">
-            No data available for the last 30 days.
-          </div>
-        ) : (
-          <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={formattedData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="colorExpense" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#f43f5e" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <XAxis 
-                  dataKey="displayDate" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fontSize: 12, fill: "#888888" }} 
-                  dy={10} 
-                  minTickGap={20}
-                />
-                <YAxis 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fontSize: 12, fill: "#888888" }}
-                  tickFormatter={(val) => {
-                    const str = formatCurrency(val, currency);
-                    return str.replace(/\.00$/, "");
-                  }}
-                  dx={-10}
-                />
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" opacity={0.5} />
-                <Tooltip 
-                  contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)" }}
-                  itemStyle={{ fontSize: "14px", fontWeight: 500 }}
-                  labelStyle={{ color: "#888888", marginBottom: "4px" }}
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  formatter={(value: any) => [formatCurrency(Number(value || 0), currency)]}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="income" 
-                  name="Income"
-                  stroke="#10b981" 
-                  strokeWidth={2}
-                  fillOpacity={1} 
-                  fill="url(#colorIncome)" 
-                  activeDot={{ r: 6, strokeWidth: 0, fill: "#10b981" }}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="expense" 
-                  name="Expense"
-                  stroke="#f43f5e" 
-                  strokeWidth={2}
-                  fillOpacity={1} 
-                  fill="url(#colorExpense)" 
-                  activeDot={{ r: 6, strokeWidth: 0, fill: "#f43f5e" }}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+      
+      <CardContent className="flex-1 pb-6 pl-0 sm:pl-6 pt-2 relative">
+        {isDataEmpty && (
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/60 backdrop-blur-[1px]">
+            <p className="text-sm text-gray-400 font-medium bg-white px-4 py-2 rounded-full shadow-sm border border-gray-100">
+              No data available for the last 30 days.
+            </p>
           </div>
         )}
+        
+        <div className="h-[300px] w-full mt-4">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }} barSize={16}>
+              <XAxis 
+                dataKey="displayDate" 
+                axisLine={false} 
+                tickLine={false} 
+                tick={{ fontSize: 10, fill: "#9ca3af", fontFamily: "monospace" }} 
+                dy={10} 
+                minTickGap={30}
+              />
+              <YAxis 
+                axisLine={false} 
+                tickLine={false} 
+                tick={{ fontSize: 10, fill: "#9ca3af", fontFamily: "monospace" }}
+                tickFormatter={(val) => {
+                  if (val === 0) return "0";
+                  return `$${(val / 1000).toFixed(1)}k`;
+                }}
+                dx={-10}
+              />
+              <CartesianGrid strokeDasharray="3 3" vertical={true} stroke="#f3f4f6" />
+              {!isDataEmpty && (
+                <Tooltip 
+                  cursor={{ fill: '#f3f4f6' }}
+                  contentStyle={{ 
+                    backgroundColor: '#111827', 
+                    borderRadius: "6px", 
+                    border: "none", 
+                    color: '#fff',
+                    boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)" 
+                  }}
+                  itemStyle={{ fontSize: "13px", fontFamily: "monospace" }}
+                  labelStyle={{ color: "#9ca3af", marginBottom: "4px", fontSize: "11px", fontWeight: "bold" }}
+                  formatter={(value: any) => [formatCurrency(Number(value || 0), currency)]}
+                />
+              )}
+              {avgExpense > 0 && (
+                <ReferenceLine y={avgExpense} stroke="#d1d5db" strokeDasharray="3 3" />
+              )}
+              {isDataEmpty && (
+                <ReferenceLine y={100} stroke="#f3f4f6" strokeDasharray="3 3" />
+              )}
+              <Bar dataKey="income" name="Income" fill="#14b8a6" radius={[2, 2, 0, 0]} stackId="a" />
+              <Bar dataKey="expense" name="Expense" fill="#8b5cf6" radius={[2, 2, 0, 0]} stackId="a" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </CardContent>
     </Card>
   );

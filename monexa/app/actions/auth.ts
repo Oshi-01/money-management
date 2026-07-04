@@ -38,6 +38,19 @@ export async function registerUser(prevState: unknown, formData: FormData) {
         name,
         email,
         password: hashedPassword,
+        categories: {
+          create: [
+            { name: "Salary", type: "INCOME" },
+            { name: "Investments", type: "INCOME" },
+            { name: "Housing", type: "EXPENSE" },
+            { name: "Groceries", type: "EXPENSE" },
+            { name: "Utilities", type: "EXPENSE" },
+            { name: "Transportation", type: "EXPENSE" },
+            { name: "Dining Out", type: "EXPENSE" },
+            { name: "Entertainment", type: "EXPENSE" },
+            { name: "Shopping", type: "EXPENSE" },
+          ]
+        }
       },
     });
 

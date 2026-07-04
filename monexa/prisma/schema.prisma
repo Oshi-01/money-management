@@ -25,6 +25,7 @@ model User {
   loans        Loan[]
   budgets      Budget[]
   savingsGoals SavingsGoal[]
+  accounts     Account[]
 }
 
 model Category {
@@ -51,6 +52,7 @@ model Transaction {
   id          String   @id @default(cuid())
   userId      String
   categoryId  String
+  accountId   String?
   description String
   amount      Float
   type        CategoryType
@@ -61,6 +63,7 @@ model Transaction {
 
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  account     Account? @relation(fields: [accountId], references: [id], onDelete: SetNull)
 }
 
 model Loan {
@@ -128,4 +131,18 @@ model SavingsGoal {
   deadline     DateTime?
 
   user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Account {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  type      String   // e.g., 'Primary', 'Credit', 'Digital'
+  prefix    String?  // e.g., '**** 4587' or email
+  balance   Float    @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
 }

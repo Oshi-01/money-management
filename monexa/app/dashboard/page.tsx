@@ -1,11 +1,14 @@
 import { auth } from "@/auth";
 import { getDashboardData } from "@/app/actions/dashboard";
-import { SummaryCards } from "@/components/dashboard/summary-cards";
-import { RecentTransactions } from "@/components/dashboard/recent-transactions";
-import { DashboardChart } from "@/components/dashboard/dashboard-chart";
-import { Plus } from "lucide-react";
-import Link from "next/link";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { EnfixStatCards } from "@/components/dashboard/enfix-stat-cards";
+import { EnfixBalanceTrend } from "@/components/dashboard/enfix-balance-trend";
+import { EnfixTransactionHistory } from "@/components/dashboard/enfix-transaction-history";
+import { EnfixSavingsGoals } from "@/components/dashboard/enfix-savings-goals";
+import { EnfixMonthlyBudgets } from "@/components/dashboard/enfix-monthly-budgets";
+import { EnfixMonthlyExpenses } from "@/components/dashboard/enfix-monthly-expenses";
+import { EnfixIncomeExpenseChart } from "@/components/dashboard/enfix-income-expense-chart";
+
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Dashboard - Monexa",
@@ -16,46 +19,73 @@ export default async function DashboardPage() {
   const session = await auth();
 
   // Fetch the dashboard data
-  const { totalIncome, totalExpense, balance, recentTransactions, chartData, currency } = await getDashboardData();
+  const { 
+    totalIncome, 
+    totalExpense, 
+    balance, 
+    recentTransactions, 
+    chartData, 
+    currency,
+    spendingsBreakdown,
+    savingsTrend,
+    incomeTrend,
+    expenseTrend,
+    savingsGoals,
+    budgets,
+    trends
+  } = await getDashboardData();
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-8">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
-            Overview
-          </h2>
-          <p className="text-muted-foreground mt-1">
-            Welcome back, <span className="font-medium text-foreground">{session?.user?.name?.split(' ')[0] || "User"}</span>! Here is your financial summary.
-          </p>
+    <div className="w-full flex flex-col gap-10">
+      
+      {/* Top Header */}
+      <div className="flex flex-col">
+        <h1 className="text-3xl font-bold text-[#1e293b]">Dashboard</h1>
+        <p className="text-gray-500 font-medium mt-1">Welcome Enfix Finance Management</p>
+      </div>
+
+      {/* Row 1: Stat Cards and Balance Trend */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="lg:col-span-5 xl:col-span-4 h-full min-h-[300px]">
+          <EnfixStatCards 
+            balance={balance} 
+            totalIncome={totalIncome} 
+            totalExpense={totalExpense} 
+            currency={currency}
+            trends={trends}
+            savingsTrend={savingsTrend}
+            incomeTrend={incomeTrend}
+            expenseTrend={expenseTrend}
+          />
         </div>
-        <div className="flex items-center space-x-2">
-          <Link
-            href="/dashboard/transactions"
-            className={buttonVariants({ className: "rounded-full shadow-sm bg-blue-600 hover:bg-blue-700 text-white" })}
-          >
-            <Plus className="mr-2 h-4 w-4" /> Add Transaction
-          </Link>
+        <div className="lg:col-span-7 xl:col-span-8 h-full min-h-[300px] pt-4 lg:pt-0">
+          <EnfixBalanceTrend balance={balance} currency={currency} savingsTrend={savingsTrend} trends={trends} />
         </div>
       </div>
 
-      {/* 1. Summary Cards */}
-      <SummaryCards
-        balance={balance}
-        totalIncome={totalIncome}
-        totalExpense={totalExpense}
-        currency={currency}
-      />
-
-      {/* 2. Charts and Recent Transactions Grid */}
-      <div className="grid gap-6 md:grid-cols-3">
-        <div className="md:col-span-2">
-          <DashboardChart data={chartData} currency={currency} />
+      {/* Row 2: Transaction History and Savings Goals */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="lg:col-span-8">
+          <EnfixTransactionHistory transactions={recentTransactions} currency={currency} />
         </div>
-        <div className="md:col-span-1 min-w-0">
-          <RecentTransactions transactions={recentTransactions} currency={currency} />
+        <div className="lg:col-span-4 pt-4 lg:pt-0">
+          <EnfixSavingsGoals goals={savingsGoals} />
         </div>
       </div>
+
+      {/* Row 3: Monthly Charts and Budgets */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="lg:col-span-6 h-full min-h-[350px]">
+          <EnfixIncomeExpenseChart data={chartData} currency={currency} />
+        </div>
+        <div className="lg:col-span-3 h-full">
+          <EnfixMonthlyBudgets budgets={budgets} />
+        </div>
+        <div className="lg:col-span-3 h-full pt-4 lg:pt-0">
+          <EnfixMonthlyExpenses breakdown={spendingsBreakdown} />
+        </div>
+      </div>
+
     </div>
   );
 }

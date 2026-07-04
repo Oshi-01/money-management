@@ -10,6 +10,7 @@ const transactionSchema = z.object({
   description: z.string().min(1, "Description is required"),
   amount: z.coerce.number().positive("Amount must be positive"),
   type: z.enum(["INCOME", "EXPENSE"]),
+  accountId: z.string().optional(),
   date: z.string().min(1, "Date is required"),
   notes: z.string().optional(),
 });
@@ -58,12 +59,58 @@ export async function createTransaction(formData: FormData) {
       return { error: "Invalid data" };
     }
 
-    await prisma.transaction.create({
-      data: {
-        ...validated.data,
-        date: new Date(validated.data.date),
-        userId: session.user.id,
-      },
+    const { categoryId, description, amount, type, date, notes, accountId } = validated.data;
+    const userId = session.user.id;
+
+    // Start a transaction to ensure both transaction creation and account/budget updates succeed or fail together
+    await prisma.$transaction(async (tx) => {
+      // 1. Create the transaction
+      await tx.transaction.create({
+        data: {
+          userId,
+          description,
+          amount,
+          type,
+          categoryId,
+          accountId: accountId || null,
+          date: new Date(date),
+          notes,
+        },
+      });
+
+      // 2. Update Budget if it's an EXPENSE
+      if (type === "EXPENSE") {
+        const month = date.substring(0, 7); // e.g., "2024-03"
+        const budget = await tx.budget.findUnique({
+          where: {
+            userId_categoryId_month: {
+              userId,
+              categoryId,
+              month,
+            },
+          },
+        });
+
+        if (budget) {
+          // You could optionally store spent amount on budget or just let the dashboard calculate it dynamically
+          // For now, Monexa calculates budget usage dynamically in the dashboard
+        }
+      }
+
+      // 3. Update Account Balance if linked
+      if (accountId) {
+        if (type === "INCOME") {
+          await tx.account.update({
+            where: { id: accountId },
+            data: { balance: { increment: amount } }
+          });
+        } else if (type === "EXPENSE") {
+          await tx.account.update({
+            where: { id: accountId },
+            data: { balance: { decrement: amount } }
+          });
+        }
+      }
     });
 
     revalidatePath("/dashboard/transactions");

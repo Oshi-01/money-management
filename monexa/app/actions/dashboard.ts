@@ -27,6 +27,43 @@ export async function getDashboardData() {
   const totalExpense = aggregates.find((a) => a.type === "EXPENSE")?._sum.amount || 0;
   const balance = totalIncome - totalExpense;
 
+  // 1b. Calculate trends (compared to last month)
+  const now = new Date();
+  const firstDayThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const firstDayLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  
+  const thisMonthAggregates = await prisma.transaction.groupBy({
+    by: ["type"],
+    where: { userId, date: { gte: firstDayThisMonth } },
+    _sum: { amount: true },
+  });
+  const thisMonthIncome = thisMonthAggregates.find(a => a.type === "INCOME")?._sum.amount || 0;
+  const thisMonthExpense = thisMonthAggregates.find(a => a.type === "EXPENSE")?._sum.amount || 0;
+  const thisMonthBalance = thisMonthIncome - thisMonthExpense;
+
+  const lastMonthAggregates = await prisma.transaction.groupBy({
+    by: ["type"],
+    where: { userId, date: { gte: firstDayLastMonth, lt: firstDayThisMonth } },
+    _sum: { amount: true },
+  });
+  const lastMonthIncome = lastMonthAggregates.find(a => a.type === "INCOME")?._sum.amount || 0;
+  const lastMonthExpense = lastMonthAggregates.find(a => a.type === "EXPENSE")?._sum.amount || 0;
+  const lastMonthBalance = lastMonthIncome - lastMonthExpense;
+
+  const calculateChange = (current: number, previous: number) => {
+    if (previous === 0) return current > 0 ? 100 : 0;
+    return ((current - previous) / previous) * 100;
+  };
+
+  const trends = {
+    incomeChange: calculateChange(thisMonthIncome, lastMonthIncome),
+    expenseChange: calculateChange(thisMonthExpense, lastMonthExpense),
+    balanceChange: calculateChange(thisMonthBalance, lastMonthBalance),
+    lastMonthIncome,
+    lastMonthExpense,
+    lastMonthBalance
+  };
+
   // 2. Get recent 5 transactions
   const recentTransactions = await prisma.transaction.findMany({
     where: { userId },
@@ -35,8 +72,7 @@ export async function getDashboardData() {
     include: { category: true },
   });
 
-  // 3. Get monthly data for the last 30 days (simplified: group by date)
-  // For a basic chart, we can fetch all transactions in the last 30 days and group them by date
+  // 3. Get monthly data for the last 30 days
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
@@ -69,6 +105,103 @@ export async function getDashboardData() {
     expense: chartDataMap[date].expense,
   }));
 
+  // 4. Spendings Breakdown (Top 5 categories by expense percentage)
+  const expenseByCategory = await prisma.transaction.groupBy({
+    by: ["categoryId"],
+    where: { userId, type: "EXPENSE" },
+    _sum: { amount: true },
+  });
+
+  const categories = await prisma.category.findMany({ where: { userId } });
+  
+  let spendingsBreakdown: { name: string; amount: number; percent: number; colorHex: string }[] = [];
+  
+  if (totalExpense > 0) {
+    const sortedExpenses = expenseByCategory
+      .sort((a, b) => (b._sum.amount || 0) - (a._sum.amount || 0))
+      .slice(0, 5);
+      
+    const colors = ['#f97316', '#eab308', '#84cc16', '#14b8a6', '#8b5cf6', '#64748b'];
+
+    spendingsBreakdown = sortedExpenses.map((exp, index) => {
+      const cat = categories.find(c => c.id === exp.categoryId);
+      return {
+        name: cat?.name || 'Other',
+        amount: exp._sum.amount || 0,
+        percent: Math.round(((exp._sum.amount || 0) / totalExpense) * 100),
+        colorHex: colors[index % colors.length]
+      };
+    });
+  }
+
+  // 5. Savings Trend (Last 6 months net balance)
+  // Get all transactions in the last 6 months
+  const sixMonthsAgo = new Date();
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+  sixMonthsAgo.setDate(1); // Start of the month 6 months ago
+
+  const sixMonthTransactions = await prisma.transaction.findMany({
+    where: {
+      userId,
+      date: { gte: sixMonthsAgo }
+    }
+  });
+
+  const monthlyNet = Array(6).fill(0).map((_, i) => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - (5 - i));
+    return {
+      month: d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase(),
+      net: 0,
+      income: 0,
+      expense: 0
+    };
+  });
+
+  sixMonthTransactions.forEach(tx => {
+    const txMonth = tx.date.getMonth();
+    const txYear = tx.date.getFullYear();
+    const now = new Date();
+    const monthsAgo = (now.getFullYear() - txYear) * 12 + (now.getMonth() - txMonth);
+    
+    if (monthsAgo >= 0 && monthsAgo < 6) {
+      const index = 5 - monthsAgo;
+      if (tx.type === 'INCOME') {
+        monthlyNet[index].net += tx.amount;
+        monthlyNet[index].income += tx.amount;
+      } else {
+        monthlyNet[index].net -= tx.amount;
+        monthlyNet[index].expense += tx.amount;
+      }
+    }
+  });
+
+  const savingsTrend = monthlyNet.map(m => ({ month: m.month, net: m.net }));
+  const incomeTrend = monthlyNet.map(m => ({ month: m.month, income: m.income }));
+  const expenseTrend = monthlyNet.map(m => ({ month: m.month, expense: m.expense }));
+
+  // 6. Savings Goals
+  const savingsGoals = await prisma.savingsGoal.findMany({
+    where: { userId },
+    take: 4,
+  });
+
+  // 7. Monthly Budgets
+  const currentMonthStr = new Date().toISOString().slice(0, 7); // YYYY-MM
+  const budgets = await prisma.budget.findMany({
+    where: { userId, month: currentMonthStr },
+    include: { category: true },
+    take: 4,
+  });
+
+  const budgetsWithSpent = budgets.map(b => {
+    const spent = spendingsBreakdown.find(s => s.name === b.category.name)?.amount || 0;
+    return {
+      ...b,
+      spent
+    };
+  });
+
   return {
     totalIncome,
     totalExpense,
@@ -76,5 +209,12 @@ export async function getDashboardData() {
     recentTransactions,
     chartData,
     currency,
+    spendingsBreakdown,
+    savingsTrend,
+    incomeTrend,
+    expenseTrend,
+    savingsGoals,
+    budgets: budgetsWithSpent,
+    trends
   };
 }

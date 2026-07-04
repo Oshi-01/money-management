@@ -87,6 +87,115 @@ export async function getBudgetsWithSpending(monthStr: string) {
   }
 }
 
+export async function getEnfixBudgetsData(monthStr: string) {
+  try {
+    const session = await auth();
+    if (!session?.user?.email) throw new Error("Unauthorized");
+    const user = await prisma.user.findUnique({ where: { email: session.user.email } });
+    if (!user) throw new Error("User not found");
+
+    const [year, month] = monthStr.split("-").map(Number);
+    
+    // Get all budgets for the requested month
+    const currentBudgets = await prisma.budget.findMany({
+      where: { userId: user.id, month: monthStr },
+      include: { category: true },
+      orderBy: { amount: "desc" },
+    });
+
+    if (currentBudgets.length === 0) {
+      return { budgets: [], summary: { totalBudget: 0, totalSpent: 0 } };
+    }
+
+    // Prepare date ranges
+    // Current month
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+    
+    // Previous month
+    const prevMonthStartDate = new Date(year, month - 2, 1);
+    const prevMonthEndDate = new Date(year, month - 1, 0, 23, 59, 59, 999);
+
+    // 10 months ago
+    const tenMonthsAgo = new Date(year, month - 10, 1);
+
+    // Fetch all transactions for the last 10 months for these categories
+    const categoryIds = currentBudgets.map(b => b.categoryId);
+    const transactions = await prisma.transaction.findMany({
+      where: {
+        userId: user.id,
+        type: "EXPENSE",
+        categoryId: { in: categoryIds },
+        date: { gte: tenMonthsAgo, lte: endDate }
+      }
+    });
+
+    // Fetch all budgets for the last 10 months for these categories
+    const historicalBudgets = await prisma.budget.findMany({
+      where: {
+        userId: user.id,
+        categoryId: { in: categoryIds },
+      }
+    });
+
+    const resultBudgets = currentBudgets.map(budget => {
+      // Current month spending
+      const currentSpent = transactions
+        .filter(t => t.categoryId === budget.categoryId && t.date >= startDate && t.date <= endDate)
+        .reduce((sum, t) => sum + t.amount, 0);
+
+      // Last month spending
+      const lastMonthSpent = transactions
+        .filter(t => t.categoryId === budget.categoryId && t.date >= prevMonthStartDate && t.date <= prevMonthEndDate)
+        .reduce((sum, t) => sum + t.amount, 0);
+
+      // Build 10-month history
+      const history = [];
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      
+      for (let i = 9; i >= 0; i--) {
+        const d = new Date(year, month - 1 - i, 1);
+        const mStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        
+        const mStart = new Date(d.getFullYear(), d.getMonth(), 1);
+        const mEnd = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
+
+        const mSpent = transactions
+          .filter(t => t.categoryId === budget.categoryId && t.date >= mStart && t.date <= mEnd)
+          .reduce((sum, t) => sum + t.amount, 0);
+
+        const mBudget = historicalBudgets.find(b => b.categoryId === budget.categoryId && b.month === mStr)?.amount || 0;
+
+        history.push({
+          month: monthNames[d.getMonth()],
+          fullMonth: mStr,
+          spent: mSpent,
+          budget: mBudget
+        });
+      }
+
+      return {
+        ...budget,
+        spentAmount: currentSpent,
+        lastMonthSpent,
+        isOverBudget: currentSpent > budget.amount,
+        history
+      };
+    });
+
+    const totalBudget = resultBudgets.reduce((sum, b) => sum + b.amount, 0);
+    const totalSpent = resultBudgets.reduce((sum, b) => sum + b.spentAmount, 0);
+
+    return {
+      budgets: resultBudgets,
+      summary: { totalBudget, totalSpent }
+    };
+  } catch (error) {
+    console.error("Error fetching Enfix budgets:", error);
+    return { budgets: [], summary: { totalBudget: 0, totalSpent: 0 } };
+  }
+}
+
 export async function createBudget(formData: FormData) {
   try {
     const session = await auth();

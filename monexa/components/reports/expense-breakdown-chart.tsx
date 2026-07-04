@@ -16,14 +16,14 @@ interface ExpenseBreakdownProps {
 
 export function ExpenseBreakdownChart({ data, currency }: ExpenseBreakdownProps) {
   return (
-    <Card className="flex flex-col border-none shadow-sm h-full">
-      <CardHeader>
-        <CardTitle className="text-base font-semibold">Expense Breakdown</CardTitle>
-        <CardDescription>Where your money went this month</CardDescription>
-      </CardHeader>
-      <CardContent className="flex-1 pb-6">
+    <div className="flex flex-col h-full w-full">
+      <div className="mb-6">
+        <h3 className="text-xl font-bold text-[#1e293b]">Expense Breakdown</h3>
+        <p className="text-sm text-gray-400">Where your money went this month</p>
+      </div>
+      <div className="flex-1 pb-6">
         {data.length === 0 ? (
-          <div className="flex h-[300px] w-full flex-col items-center justify-center text-sm text-muted-foreground bg-gray-50/50 dark:bg-gray-900/50 rounded-lg border border-dashed">
+          <div className="flex h-[300px] w-full flex-col items-center justify-center text-sm text-gray-400 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
             <p>No expenses recorded this month.</p>
           </div>
         ) : (
@@ -34,10 +34,11 @@ export function ExpenseBreakdownChart({ data, currency }: ExpenseBreakdownProps)
                   data={data}
                   cx="50%"
                   cy="50%"
-                  innerRadius={60}
+                  innerRadius={70}
                   outerRadius={100}
                   paddingAngle={2}
                   dataKey="value"
+                  stroke="none"
                 >
                   {data.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -45,19 +46,20 @@ export function ExpenseBreakdownChart({ data, currency }: ExpenseBreakdownProps)
                 </Pie>
                 <Tooltip 
                   formatter={(value: any) => formatCurrency(Number(value), currency)}
-                  contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }}
+                  contentStyle={{ borderRadius: "16px", border: "none", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)" }}
                 />
                 <Legend 
                   layout="horizontal" 
                   verticalAlign="bottom" 
                   align="center"
                   wrapperStyle={{ paddingTop: "20px" }}
+                  iconType="circle"
                 />
               </PieChart>
             </ResponsiveContainer>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

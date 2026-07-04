@@ -15,14 +15,14 @@ interface CashFlowProps {
 
 export function CashFlowChart({ data, currency }: CashFlowProps) {
   return (
-    <Card className="flex flex-col border-none shadow-sm h-full">
-      <CardHeader>
-        <CardTitle className="text-base font-semibold">Cash Flow</CardTitle>
-        <CardDescription>Income vs Expenses over the last 6 months</CardDescription>
-      </CardHeader>
-      <CardContent className="flex-1 pb-6 pl-0 sm:pl-6 pt-2">
+    <div className="flex flex-col h-full w-full">
+      <div className="mb-6">
+        <h3 className="text-xl font-bold text-[#1e293b]">Cash Flow</h3>
+        <p className="text-sm text-gray-400">Income vs Expenses over the last 6 months</p>
+      </div>
+      <div className="flex-1 pb-6 pl-0 sm:pl-6 pt-2">
         {data.length === 0 ? (
-          <div className="flex h-[300px] w-full flex-col items-center justify-center text-sm text-muted-foreground bg-gray-50/50 dark:bg-gray-900/50 rounded-lg border border-dashed">
+          <div className="flex h-[300px] w-full flex-col items-center justify-center text-sm text-gray-400 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
             <p>No transaction history available.</p>
           </div>
         ) : (
@@ -48,21 +48,22 @@ export function CashFlowChart({ data, currency }: CashFlowProps) {
                   dx={-10}
                 />
                 <Tooltip 
-                  contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }}
+                  contentStyle={{ borderRadius: "16px", border: "none", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)" }}
                   formatter={(value: any) => formatCurrency(Number(value), currency)}
                   cursor={{ fill: "transparent" }}
                 />
                 <Legend 
                   wrapperStyle={{ paddingTop: "20px" }}
                   verticalAlign="bottom"
+                  iconType="circle"
                 />
-                <Bar dataKey="income" name="Income" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={40} />
-                <Bar dataKey="expense" name="Expense" fill="#f43f5e" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                <Bar dataKey="income" name="Income" fill="#10b981" radius={[8, 8, 0, 0]} maxBarSize={40} />
+                <Bar dataKey="expense" name="Expense" fill="#f43f5e" radius={[8, 8, 0, 0]} maxBarSize={40} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
