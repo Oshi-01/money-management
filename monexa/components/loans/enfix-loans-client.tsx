@@ -12,7 +12,8 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
-  AlertCircle
+  AlertCircle,
+  Pencil
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,8 @@ type LoanWithRepayments = Loan & {
 export function EnfixLoansClient({ loans, currency }: { loans: LoanWithRepayments[], currency: string }) {
   const [selectedLoanId, setSelectedLoanId] = useState<string | null>(loans[0]?.id || null);
   const [activeTab, setActiveTab] = useState<"BORROWED" | "LENT">("BORROWED");
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
   const borrowedLoans = loans.filter(l => l.loanType === "BORROWED");
   const lentLoans = loans.filter(l => l.loanType === "LENT");
@@ -71,7 +74,7 @@ export function EnfixLoansClient({ loans, currency }: { loans: LoanWithRepayment
             </div>
           </div>
 
-          <Dialog>
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger render={
               <Button className="bg-[#1e293b] hover:bg-gray-800 text-white rounded-full px-6 h-11">
                 <Plus className="mr-2 h-4 w-4" /> New Record
@@ -81,7 +84,7 @@ export function EnfixLoansClient({ loans, currency }: { loans: LoanWithRepayment
               <DialogHeader>
                 <DialogTitle>Record a New Loan</DialogTitle>
               </DialogHeader>
-              <LoanForm />
+              <LoanForm onSuccess={() => setIsCreateDialogOpen(false)} />
             </DialogContent>
           </Dialog>
         </div>
@@ -204,7 +207,22 @@ export function EnfixLoansClient({ loans, currency }: { loans: LoanWithRepayment
                       </span>
                     )}
                   </div>
-                  <h2 className="text-2xl font-bold text-[#1e293b]">{selectedLoan.personName}</h2>
+                  <div className="flex items-center gap-3">
+                    <h2 className="text-2xl font-bold text-[#1e293b]">{selectedLoan.personName}</h2>
+                    <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                      <DialogTrigger render={
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-full">
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      } />
+                      <DialogContent className="sm:max-w-[600px] rounded-2xl">
+                        <DialogHeader>
+                          <DialogTitle>Edit Loan</DialogTitle>
+                        </DialogHeader>
+                        <LoanForm initialData={selectedLoan} onSuccess={() => setIsEditDialogOpen(false)} />
+                      </DialogContent>
+                    </Dialog>
+                  </div>
                   {selectedLoan.notes && <p className="text-sm text-gray-400 mt-1">{selectedLoan.notes}</p>}
                 </div>
 

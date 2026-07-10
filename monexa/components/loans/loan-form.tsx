@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { createLoan } from "@/app/actions/loans";
+import { createLoan, updateLoan } from "@/app/actions/loans";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -30,14 +30,22 @@ const loanSchema = z.object({
 
 type LoanFormValues = z.infer<typeof loanSchema>;
 
-export function LoanForm() {
+export function LoanForm({ initialData, onSuccess }: { initialData?: any, onSuccess?: () => void }) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
   const { register, handleSubmit, setValue, watch, formState: { errors }, reset } = useForm<LoanFormValues>({
     resolver: zodResolver(loanSchema),
-    defaultValues: {
+    defaultValues: initialData ? {
+      personName: initialData.personName,
+      loanType: initialData.loanType,
+      principalAmount: initialData.principalAmount,
+      startDate: new Date(initialData.startDate).toISOString().split("T")[0],
+      dueDate: initialData.dueDate ? new Date(initialData.dueDate).toISOString().split("T")[0] : "",
+      notes: initialData.notes || "",
+      includeInTotal: initialData.includeInTotal,
+    } : {
       personName: "",
       loanType: "BORROWED",
       principalAmount: 0,
@@ -58,17 +66,25 @@ export function LoanForm() {
         if (value) formData.append(key, value.toString());
       });
 
-      const result = await createLoan(formData);
+      const result = initialData?.id 
+        ? await updateLoan(initialData.id, formData)
+        : await createLoan(formData);
 
       if (result.error) {
         setError(result.error);
       } else {
-        setSuccess("Loan recorded successfully!");
-        reset();
+        setSuccess(initialData?.id ? "Loan updated successfully!" : "Loan recorded successfully!");
+        if (!initialData) reset();
         
-        setTimeout(() => {
-          setSuccess(null);
-        }, 3000);
+        if (onSuccess) {
+          setTimeout(() => {
+            onSuccess();
+          }, 1500);
+        } else {
+          setTimeout(() => {
+            setSuccess(null);
+          }, 3000);
+        }
       }
     });
   };
@@ -147,7 +163,7 @@ export function LoanForm() {
 
       <Button type="submit" className="w-full" disabled={isPending}>
         {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        Save Loan
+        {initialData ? "Update Loan" : "Save Loan"}
       </Button>
     </form>
   );

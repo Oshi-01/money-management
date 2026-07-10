@@ -70,6 +70,54 @@ export async function createLoan(formData: FormData) {
   }
 }
 
+export async function updateLoan(id: string, formData: FormData) {
+  const session = await auth();
+  if (!session?.user?.id) return { error: "Unauthorized" };
+
+  try {
+    const loan = await prisma.loan.findUnique({ where: { id } });
+    if (!loan || loan.userId !== session.user.id) {
+      return { error: "Loan not found" };
+    }
+
+    const data = Object.fromEntries(formData.entries());
+    const includeInTotal = data.includeInTotal === "true" || data.includeInTotal === "on";
+    const dataToValidate = { ...data, includeInTotal };
+    
+    const validated = loanSchema.safeParse(dataToValidate);
+
+    if (!validated.success) {
+      return { error: "Invalid data" };
+    }
+
+    const { personName, loanType, principalAmount, startDate, dueDate, notes, includeInTotal: include } = validated.data;
+
+    // Calculate new balance based on the difference in principal amount
+    const principalDelta = principalAmount - loan.principalAmount;
+    const newBalance = loan.balance + principalDelta;
+
+    await prisma.loan.update({
+      where: { id },
+      data: {
+        personName,
+        loanType: loanType as LoanType,
+        principalAmount,
+        balance: newBalance,
+        startDate: new Date(startDate),
+        dueDate: dueDate ? new Date(dueDate) : null,
+        notes,
+        includeInTotal: include,
+      },
+    });
+
+    revalidatePath("/dashboard/loans");
+    return { success: "Loan updated successfully" };
+  } catch (error) {
+    console.error("Failed to update loan", error);
+    return { error: "Failed to update loan" };
+  }
+}
+
 export async function deleteLoan(id: string) {
   const session = await auth();
   if (!session?.user?.id) return { error: "Unauthorized" };

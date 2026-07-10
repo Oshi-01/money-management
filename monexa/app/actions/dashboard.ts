@@ -25,17 +25,17 @@ export async function getDashboardData() {
 
   const loans = await prisma.loan.findMany({
     where: { userId, includeInTotal: true },
-    select: { loanType: true, balance: true }
+    select: { loanType: true, balance: true, startDate: true }
   });
 
   const borrowedBalance = loans.filter(l => l.loanType === 'BORROWED').reduce((acc, l) => acc + l.balance, 0);
   const lentBalance = loans.filter(l => l.loanType === 'LENT').reduce((acc, l) => acc + l.balance, 0);
 
-  const totalIncome = aggregates.find((a) => a.type === "INCOME")?._sum.amount || 0;
-  const totalExpense = aggregates.find((a) => a.type === "EXPENSE")?._sum.amount || 0;
+  const totalIncome = (aggregates.find((a) => a.type === "INCOME")?._sum.amount || 0) + borrowedBalance;
+  const totalExpense = (aggregates.find((a) => a.type === "EXPENSE")?._sum.amount || 0) + lentBalance;
   
-  // Total balance includes cash flow from active loans
-  const balance = totalIncome - totalExpense + borrowedBalance - lentBalance;
+  // Total balance includes cash flow from active loans (now factored directly into income/expense)
+  const balance = totalIncome - totalExpense;
 
   // 1b. Calculate trends (compared to last month)
   const now = new Date();
@@ -47,8 +47,12 @@ export async function getDashboardData() {
     where: { userId, date: { gte: firstDayThisMonth } },
     _sum: { amount: true },
   });
-  const thisMonthIncome = thisMonthAggregates.find(a => a.type === "INCOME")?._sum.amount || 0;
-  const thisMonthExpense = thisMonthAggregates.find(a => a.type === "EXPENSE")?._sum.amount || 0;
+  const thisMonthLoans = loans.filter(l => l.startDate >= firstDayThisMonth);
+  const thisMonthBorrowed = thisMonthLoans.filter(l => l.loanType === 'BORROWED').reduce((acc, l) => acc + l.balance, 0);
+  const thisMonthLent = thisMonthLoans.filter(l => l.loanType === 'LENT').reduce((acc, l) => acc + l.balance, 0);
+
+  const thisMonthIncome = (thisMonthAggregates.find(a => a.type === "INCOME")?._sum.amount || 0) + thisMonthBorrowed;
+  const thisMonthExpense = (thisMonthAggregates.find(a => a.type === "EXPENSE")?._sum.amount || 0) + thisMonthLent;
   const thisMonthBalance = thisMonthIncome - thisMonthExpense;
 
   const lastMonthAggregates = await prisma.transaction.groupBy({
@@ -56,8 +60,12 @@ export async function getDashboardData() {
     where: { userId, date: { gte: firstDayLastMonth, lt: firstDayThisMonth } },
     _sum: { amount: true },
   });
-  const lastMonthIncome = lastMonthAggregates.find(a => a.type === "INCOME")?._sum.amount || 0;
-  const lastMonthExpense = lastMonthAggregates.find(a => a.type === "EXPENSE")?._sum.amount || 0;
+  const lastMonthLoans = loans.filter(l => l.startDate >= firstDayLastMonth && l.startDate < firstDayThisMonth);
+  const lastMonthBorrowed = lastMonthLoans.filter(l => l.loanType === 'BORROWED').reduce((acc, l) => acc + l.balance, 0);
+  const lastMonthLent = lastMonthLoans.filter(l => l.loanType === 'LENT').reduce((acc, l) => acc + l.balance, 0);
+
+  const lastMonthIncome = (lastMonthAggregates.find(a => a.type === "INCOME")?._sum.amount || 0) + lastMonthBorrowed;
+  const lastMonthExpense = (lastMonthAggregates.find(a => a.type === "EXPENSE")?._sum.amount || 0) + lastMonthLent;
   const lastMonthBalance = lastMonthIncome - lastMonthExpense;
 
   const calculateChange = (current: number, previous: number) => {
@@ -94,6 +102,8 @@ export async function getDashboardData() {
     orderBy: { date: "asc" },
   });
 
+  const thirtyDaysLoans = loans.filter(l => l.startDate >= thirtyDaysAgo);
+  
   // Group by date (YYYY-MM-DD)
   const chartDataMap: Record<string, { income: number; expense: number }> = {};
   
@@ -106,6 +116,18 @@ export async function getDashboardData() {
       chartDataMap[dateStr].income += tx.amount;
     } else {
       chartDataMap[dateStr].expense += tx.amount;
+    }
+  });
+
+  thirtyDaysLoans.forEach((loan) => {
+    const dateStr = loan.startDate.toISOString().split("T")[0];
+    if (!chartDataMap[dateStr]) {
+      chartDataMap[dateStr] = { income: 0, expense: 0 };
+    }
+    if (loan.loanType === "BORROWED") {
+      chartDataMap[dateStr].income += loan.balance;
+    } else {
+      chartDataMap[dateStr].expense += loan.balance;
     }
   });
 
@@ -170,6 +192,8 @@ export async function getDashboardData() {
     };
   });
 
+  const sixMonthLoans = loans.filter(l => l.startDate >= sixMonthsAgo);
+  
   sixMonthTransactions.forEach(tx => {
     const txMonth = tx.date.getMonth();
     const txYear = tx.date.getFullYear();
@@ -184,6 +208,24 @@ export async function getDashboardData() {
       } else {
         monthlyNet[index].net -= tx.amount;
         monthlyNet[index].expense += tx.amount;
+      }
+    }
+  });
+
+  sixMonthLoans.forEach(loan => {
+    const loanMonth = loan.startDate.getMonth();
+    const loanYear = loan.startDate.getFullYear();
+    const now = new Date();
+    const monthsAgo = (now.getFullYear() - loanYear) * 12 + (now.getMonth() - loanMonth);
+    
+    if (monthsAgo >= 0 && monthsAgo < 6) {
+      const index = 5 - monthsAgo;
+      if (loan.loanType === 'BORROWED') {
+        monthlyNet[index].net += loan.balance;
+        monthlyNet[index].income += loan.balance;
+      } else {
+        monthlyNet[index].net -= loan.balance;
+        monthlyNet[index].expense += loan.balance;
       }
     }
   });
