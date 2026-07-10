@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import crypto from "crypto";
+import { headers } from "next/headers";
 
 const requestResetSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -43,7 +44,10 @@ export async function requestPasswordReset(prevState: unknown, formData: FormDat
     });
 
     // In a real app, send this link via email (e.g., using Resend, SendGrid)
-    const resetLink = `http://localhost:3000/reset-password?token=${token}`;
+    const headersList = await headers();
+    const host = headersList.get("host") || "localhost:3000";
+    const protocol = host.includes("localhost") ? "http" : "https";
+    const resetLink = `${protocol}://${host}/reset-password?token=${token}`;
     
     console.log("\n\n=======================================");
     console.log("PASSWORD RESET REQUESTED");
