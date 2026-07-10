@@ -31,11 +31,11 @@ export async function getDashboardData() {
   const borrowedBalance = loans.filter(l => l.loanType === 'BORROWED').reduce((acc, l) => acc + l.balance, 0);
   const lentBalance = loans.filter(l => l.loanType === 'LENT').reduce((acc, l) => acc + l.balance, 0);
 
-  const totalIncome = (aggregates.find((a) => a.type === "INCOME")?._sum.amount || 0) + borrowedBalance;
-  const totalExpense = (aggregates.find((a) => a.type === "EXPENSE")?._sum.amount || 0) + lentBalance;
+  const totalIncome = aggregates.find((a) => a.type === "INCOME")?._sum.amount || 0;
+  const totalExpense = aggregates.find((a) => a.type === "EXPENSE")?._sum.amount || 0;
   
-  // Total balance includes cash flow from active loans (now factored directly into income/expense)
-  const balance = totalIncome - totalExpense;
+  // Total balance includes cash flow from active loans (if includeInTotal is true)
+  const balance = (totalIncome + borrowedBalance) - (totalExpense + lentBalance);
 
   // 1b. Calculate trends (compared to last month)
   const now = new Date();
@@ -51,9 +51,9 @@ export async function getDashboardData() {
   const thisMonthBorrowed = thisMonthLoans.filter(l => l.loanType === 'BORROWED').reduce((acc, l) => acc + l.balance, 0);
   const thisMonthLent = thisMonthLoans.filter(l => l.loanType === 'LENT').reduce((acc, l) => acc + l.balance, 0);
 
-  const thisMonthIncome = (thisMonthAggregates.find(a => a.type === "INCOME")?._sum.amount || 0) + thisMonthBorrowed;
-  const thisMonthExpense = (thisMonthAggregates.find(a => a.type === "EXPENSE")?._sum.amount || 0) + thisMonthLent;
-  const thisMonthBalance = thisMonthIncome - thisMonthExpense;
+  const thisMonthIncome = thisMonthAggregates.find(a => a.type === "INCOME")?._sum.amount || 0;
+  const thisMonthExpense = thisMonthAggregates.find(a => a.type === "EXPENSE")?._sum.amount || 0;
+  const thisMonthBalance = (thisMonthIncome + thisMonthBorrowed) - (thisMonthExpense + thisMonthLent);
 
   const lastMonthAggregates = await prisma.transaction.groupBy({
     by: ["type"],
@@ -64,9 +64,9 @@ export async function getDashboardData() {
   const lastMonthBorrowed = lastMonthLoans.filter(l => l.loanType === 'BORROWED').reduce((acc, l) => acc + l.balance, 0);
   const lastMonthLent = lastMonthLoans.filter(l => l.loanType === 'LENT').reduce((acc, l) => acc + l.balance, 0);
 
-  const lastMonthIncome = (lastMonthAggregates.find(a => a.type === "INCOME")?._sum.amount || 0) + lastMonthBorrowed;
-  const lastMonthExpense = (lastMonthAggregates.find(a => a.type === "EXPENSE")?._sum.amount || 0) + lastMonthLent;
-  const lastMonthBalance = lastMonthIncome - lastMonthExpense;
+  const lastMonthIncome = lastMonthAggregates.find(a => a.type === "INCOME")?._sum.amount || 0;
+  const lastMonthExpense = lastMonthAggregates.find(a => a.type === "EXPENSE")?._sum.amount || 0;
+  const lastMonthBalance = (lastMonthIncome + lastMonthBorrowed) - (lastMonthExpense + lastMonthLent);
 
   const calculateChange = (current: number, previous: number) => {
     if (previous === 0) return current > 0 ? 100 : 0;
