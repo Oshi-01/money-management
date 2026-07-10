@@ -13,6 +13,7 @@ const loanSchema = z.object({
   startDate: z.string().min(1, "Start date is required"),
   dueDate: z.string().optional(),
   notes: z.string().optional(),
+  includeInTotal: z.boolean().default(true).optional(),
 });
 
 export async function getLoans() {
@@ -34,13 +35,18 @@ export async function createLoan(formData: FormData) {
 
   try {
     const data = Object.fromEntries(formData.entries());
-    const validated = loanSchema.safeParse(data);
+    
+    // Explicitly handle boolean for includeInTotal from FormData
+    const includeInTotal = data.includeInTotal === "true" || data.includeInTotal === "on";
+    const dataToValidate = { ...data, includeInTotal };
+    
+    const validated = loanSchema.safeParse(dataToValidate);
 
     if (!validated.success) {
       return { error: "Invalid data" };
     }
 
-    const { personName, loanType, principalAmount, startDate, dueDate, notes } = validated.data;
+    const { personName, loanType, principalAmount, startDate, dueDate, notes, includeInTotal: include } = validated.data;
 
     await prisma.loan.create({
       data: {
@@ -52,6 +58,7 @@ export async function createLoan(formData: FormData) {
         startDate: new Date(startDate),
         dueDate: dueDate ? new Date(dueDate) : null,
         notes,
+        includeInTotal: include,
       },
     });
 

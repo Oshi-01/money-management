@@ -25,6 +25,7 @@ const loanSchema = z.object({
   startDate: z.string().min(1, "Start date is required"),
   dueDate: z.string().optional(),
   notes: z.string().optional(),
+  includeInTotal: z.boolean().default(true).optional(),
 });
 
 type LoanFormValues = z.infer<typeof loanSchema>;
@@ -43,6 +44,7 @@ export function LoanForm() {
       startDate: new Date().toISOString().split("T")[0],
       dueDate: "",
       notes: "",
+      includeInTotal: true,
     },
   });
 
@@ -129,6 +131,18 @@ export function LoanForm() {
       <div className="space-y-2">
         <Label htmlFor="notes">Notes (Optional)</Label>
         <Textarea id="notes" placeholder="Any additional details..." className="resize-none" {...register("notes")} />
+      </div>
+
+      <div className="flex items-center space-x-2 py-2">
+        <input 
+          type="checkbox" 
+          id="includeInTotal" 
+          className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          {...register("includeInTotal")} 
+        />
+        <Label htmlFor="includeInTotal" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+          Include in total amount calculation
+        </Label>
       </div>
 
       <Button type="submit" className="w-full" disabled={isPending}>

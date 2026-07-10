@@ -35,8 +35,8 @@ export function EnfixLoansClient({ loans, currency }: { loans: LoanWithRepayment
 
   const selectedLoan = activeLoans.find(l => l.id === selectedLoanId) || activeLoans[0];
 
-  const totalBorrowed = borrowedLoans.reduce((sum, loan) => sum + loan.balance, 0);
-  const totalLent = lentLoans.reduce((sum, loan) => sum + loan.balance, 0);
+  const totalBorrowed = borrowedLoans.filter(l => l.includeInTotal).reduce((sum, loan) => sum + loan.balance, 0);
+  const totalLent = lentLoans.filter(l => l.includeInTotal).reduce((sum, loan) => sum + loan.balance, 0);
   const netOutstanding = totalLent - totalBorrowed;
 
   const getStatusIcon = (status: string) => {

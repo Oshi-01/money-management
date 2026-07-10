@@ -80,6 +80,7 @@ model Loan {
   dueDate         DateTime?
   status          LoanStatus @default(ACTIVE)
   notes           String?
+  includeInTotal  Boolean    @default(true)
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
 

@@ -23,9 +23,8 @@ export async function getDashboardData() {
     _sum: { amount: true },
   });
 
-  // Get loans balance
   const loans = await prisma.loan.findMany({
-    where: { userId },
+    where: { userId, includeInTotal: true },
     select: { loanType: true, balance: true }
   });
 
