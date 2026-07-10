@@ -16,15 +16,60 @@ export async function getCategories() {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthorized");
 
-  return await prisma.category.findMany({
+  const userId = session.user.id;
+  let categories = await prisma.category.findMany({
     where: {
       OR: [
-        { userId: session.user.id },
+        { userId },
         { userId: null }, // System defaults
       ],
     },
     orderBy: { name: "asc" },
   });
+
+  // Auto-seed categories to ensure defaults always exist
+  const defaultCategories = [
+    { name: "Salary", type: "INCOME" as const },
+    { name: "Investments", type: "INCOME" as const },
+    { name: "Housing", type: "EXPENSE" as const },
+    { name: "Groceries", type: "EXPENSE" as const },
+    { name: "Utilities", type: "EXPENSE" as const },
+    { name: "Transportation", type: "EXPENSE" as const },
+    { name: "Dining Out", type: "EXPENSE" as const },
+    { name: "Entertainment", type: "EXPENSE" as const },
+    { name: "Shopping", type: "EXPENSE" as const },
+    { name: "Travel", type: "EXPENSE" as const },
+    { name: "Health", type: "EXPENSE" as const },
+    { name: "Education", type: "EXPENSE" as const },
+  ];
+  
+  let added = false;
+  for (const cat of defaultCategories) {
+    if (!categories.find(c => c.name === cat.name)) {
+      await prisma.category.create({
+        data: {
+          name: cat.name,
+          type: cat.type,
+          userId,
+        }
+      });
+      added = true;
+    }
+  }
+
+  if (added) {
+    categories = await prisma.category.findMany({
+      where: {
+        OR: [
+          { userId },
+          { userId: null },
+        ],
+      },
+      orderBy: { name: "asc" },
+    });
+  }
+
+  return categories;
 }
 
 export async function createCategory(formData: FormData) {

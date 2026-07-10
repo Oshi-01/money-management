@@ -11,15 +11,20 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 
 const transactionSchema = z.object({
   description: z.string().min(1, "Description is required"),
   amount: z.number().positive("Amount must be positive"),
   type: z.enum(["INCOME", "EXPENSE"]),
-  categoryId: z.string().min(1, "Category is required"),
+  categoryId: z.string().optional(),
+  budgetId: z.string().optional(),
   accountId: z.string().optional(),
   date: z.string().min(1, "Date is required"),
   notes: z.string().optional(),
+}).refine(data => data.type === "INCOME" ? !!data.categoryId : (!!data.categoryId || !!data.budgetId), {
+  message: "Either Category or Budget must be selected",
+  path: ["categoryId"]
 });
 
 type TransactionFormValues = z.infer<typeof transactionSchema>;
@@ -35,16 +40,36 @@ type Account = {
   name: string;
 };
 
-export function TransactionForm({ categories, accounts, onSuccess }: { categories: Category[], accounts?: Account[], onSuccess?: () => void }) {
+type Budget = {
+  id: string;
+  categoryId: string;
+  amount: number;
+  category?: { name: string };
+};
+
+export function TransactionForm({ 
+  categories, 
+  accounts, 
+  budgets, 
+  currency = "USD", 
+  onSuccess 
+}: { 
+  categories: Category[], 
+  accounts?: Account[], 
+  budgets?: Budget[], 
+  currency?: string,
+  onSuccess?: () => void 
+}) {
   const [isPending, startTransition] = useTransition();
 
-  const { register, handleSubmit, setValue, watch, formState: { errors }, reset } = useForm<TransactionFormValues>({
+  const { register, handleSubmit, setValue, watch, formState: { errors }, reset, clearErrors } = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
     defaultValues: { 
       description: "", 
       type: "EXPENSE", 
       amount: 0, 
       categoryId: "", 
+      budgetId: "",
       accountId: "",
       date: new Date().toISOString().split("T")[0],
       notes: ""
@@ -56,11 +81,20 @@ export function TransactionForm({ categories, accounts, onSuccess }: { categorie
 
   const onSubmit = (data: TransactionFormValues) => {
     startTransition(async () => {
+      const finalCategoryId = data.budgetId 
+        ? budgets?.find(b => b.id === data.budgetId)?.categoryId 
+        : data.categoryId;
+
+      if (!finalCategoryId) {
+        toast.error("Please select a category or budget");
+        return;
+      }
+
       const formData = new FormData();
       formData.append("description", data.description);
       formData.append("amount", data.amount.toString());
       formData.append("type", data.type);
-      formData.append("categoryId", data.categoryId);
+      formData.append("categoryId", finalCategoryId);
       if (data.accountId) formData.append("accountId", data.accountId);
       formData.append("date", data.date);
       if (data.notes) formData.append("notes", data.notes);
@@ -87,6 +121,7 @@ export function TransactionForm({ categories, accounts, onSuccess }: { categorie
               if (val) {
                 setValue("type", val as "INCOME" | "EXPENSE");
                 setValue("categoryId", ""); // Reset category when type changes
+                setValue("budgetId", "");
               }
             }} 
           >
@@ -107,16 +142,26 @@ export function TransactionForm({ categories, accounts, onSuccess }: { categorie
           <Label>Category</Label>
           <Select 
             value={watch("categoryId")} 
-            onValueChange={(val) => { if (val) setValue("categoryId", val) }}
+            onValueChange={(val) => { 
+              if (val) {
+                const finalVal = val === "none" ? "" : val;
+                setValue("categoryId", finalVal);
+                if (finalVal !== "") {
+                  setValue("budgetId", ""); // clear budget if category selected
+                  clearErrors("categoryId");
+                }
+              } 
+            }}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select category">
-                {watch("categoryId") 
+                {watch("categoryId") && watch("categoryId") !== "none"
                   ? categories.find(c => c.id === watch("categoryId"))?.name 
-                  : "Select category"}
+                  : "None"}
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="none">None</SelectItem>
               {filteredCategories.map(cat => (
                 <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
               ))}
@@ -124,6 +169,40 @@ export function TransactionForm({ categories, accounts, onSuccess }: { categorie
           </Select>
           {errors.categoryId && <p className="text-sm text-red-500">{errors.categoryId.message}</p>}
         </div>
+
+        {selectedType === "EXPENSE" && budgets && budgets.length > 0 && (
+          <div className="space-y-2">
+            <Label>Budget</Label>
+            <Select 
+              value={watch("budgetId")} 
+              onValueChange={(val) => { 
+                if (val) {
+                  const finalVal = val === "none" ? "" : val;
+                  setValue("budgetId", finalVal);
+                  if (finalVal !== "") {
+                    setValue("categoryId", ""); // clear category if budget selected
+                    clearErrors("categoryId");
+                  }
+                } 
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select budget">
+                  {watch("budgetId") && watch("budgetId") !== "none"
+                    ? budgets.find(b => b.id === watch("budgetId"))?.category?.name + " Budget"
+                    : "None"}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">None</SelectItem>
+                {budgets.map(b => (
+                  <SelectItem key={b.id} value={b.id}>{b.category?.name} ({formatCurrency(b.amount, currency).replace(/\.00$/, '')})</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.budgetId && <p className="text-sm text-red-500">{errors.budgetId.message}</p>}
+          </div>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -134,7 +213,8 @@ export function TransactionForm({ categories, accounts, onSuccess }: { categorie
 
       {accounts && accounts.length > 0 && (
         <div className="space-y-2">
-          <Label>Account (Optional)</Label>
+          <Label>Funding Source (Account)</Label>
+          <p className="text-xs text-gray-500 mb-2">Select the account (e.g., Salary Account) this money came from.</p>
           <Select 
             value={watch("accountId")} 
             onValueChange={(val) => { if (val) setValue("accountId", val === "none" ? "" : val) }}

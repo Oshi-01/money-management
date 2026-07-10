@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis, ReferenceLine } from "recharts";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, getCurrencySymbol } from "@/lib/utils";
 import { useState, useEffect } from "react";
 
 interface DashboardChartProps {
@@ -16,6 +16,7 @@ interface DashboardChartProps {
 
 export function DashboardChart({ data, currency }: DashboardChartProps) {
   const [mounted, setMounted] = useState(false);
+  const currencySymbol = getCurrencySymbol(currency);
 
   useEffect(() => {
     setMounted(true);
@@ -85,7 +86,7 @@ export function DashboardChart({ data, currency }: DashboardChartProps) {
                 tick={{ fontSize: 10, fill: "#9ca3af", fontFamily: "monospace" }}
                 tickFormatter={(val) => {
                   if (val === 0) return "0";
-                  return `$${(val / 1000).toFixed(1)}k`;
+                  return `${currencySymbol}${(val / 1000).toFixed(1)}k`;
                 }}
                 dx={-10}
               />

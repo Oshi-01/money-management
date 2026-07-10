@@ -1,3 +1,5 @@
+import { formatCurrency } from "@/lib/utils";
+
 interface SpendingBreakdown {
   name: string;
   amount: number;
@@ -7,9 +9,10 @@ interface SpendingBreakdown {
 
 interface EnfixMonthlyExpensesProps {
   breakdown: SpendingBreakdown[];
+  currency?: string;
 }
 
-export function EnfixMonthlyExpenses({ breakdown }: EnfixMonthlyExpensesProps) {
+export function EnfixMonthlyExpenses({ breakdown, currency = "USD" }: EnfixMonthlyExpensesProps) {
   const displayBreakdown = breakdown;
 
   return (
@@ -45,7 +48,7 @@ export function EnfixMonthlyExpenses({ breakdown }: EnfixMonthlyExpensesProps) {
               {item.name}
             </div>
             <div className="text-sm">
-              <span className="text-gray-400 mr-3">${item.amount}</span>
+              <span className="text-gray-400 mr-3">{formatCurrency(item.amount, currency).replace(/\.00$/, '')}</span>
               <span className="font-bold text-[#1e293b]">{item.percent}%</span>
             </div>
           </div>

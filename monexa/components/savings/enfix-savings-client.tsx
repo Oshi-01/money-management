@@ -214,7 +214,7 @@ export function EnfixSavingsClient({ goals, currency }: EnfixSavingsClientProps)
                   <div className="flex-1">
                     <div className="flex justify-between text-sm font-bold text-[#1e293b] mb-2">
                       <span>{wallet.name}</span>
-                      <span>{wallet.amount.toFixed(0)}$</span>
+                      <span>{formatCurrency(wallet.amount, currency).replace(/\.00$/, '')}</span>
                     </div>
                     <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
                       <div

@@ -1,11 +1,10 @@
 import { getTransactions } from "@/app/actions/transactions";
 import { getCategories } from "@/app/actions/categories";
 import { getUserAccounts } from "@/app/actions/accounts";
-import { TransactionForm } from "@/components/transactions/transaction-form";
+import { getEnfixBudgetsData } from "@/app/actions/budgets";
 import { TransactionList } from "@/components/transactions/transaction-list";
-import { ArrowLeftRight, Plus } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { ArrowLeftRight } from "lucide-react";
+import { NewTransactionDialog } from "@/components/transactions/new-transaction-dialog";
 
 export const metadata = {
   title: "Transactions - Monexa",
@@ -19,12 +18,14 @@ export default async function TransactionsPage(
 ) {
   const searchParams = await props.searchParams;
   const page = typeof searchParams?.page === "string" ? parseInt(searchParams.page) : 1;
+  const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
 
-  const [transactionsData, categories, accounts, userSettings] = await Promise.all([
+  const [transactionsData, categories, accounts, userSettings, budgetData] = await Promise.all([
     getTransactions(page, 50),
     getCategories(),
     getUserAccounts(),
-    import("@/app/actions/settings").then(m => m.getUserSettings())
+    import("@/app/actions/settings").then(m => m.getUserSettings()),
+    getEnfixBudgetsData(currentMonth)
   ]);
 
   const currency = userSettings?.currency || "USD";
@@ -44,15 +45,12 @@ export default async function TransactionsPage(
           </div>
         </div>
 
-        <Dialog>
-          <DialogTrigger render={<Button className="bg-[#1e293b] hover:bg-gray-800 text-white rounded-full px-6 h-11"><Plus className="mr-2 h-4 w-4" /> New Transaction</Button>} />
-          <DialogContent className="sm:max-w-[600px] rounded-2xl">
-            <DialogHeader>
-              <DialogTitle>Record a New Transaction</DialogTitle>
-            </DialogHeader>
-            <TransactionForm categories={categories} accounts={accounts} />
-          </DialogContent>
-        </Dialog>
+        <NewTransactionDialog 
+          categories={categories} 
+          accounts={accounts} 
+          budgets={budgetData.budgets} 
+          currency={currency}
+        />
       </div>
 
       {/* Full Width List */}

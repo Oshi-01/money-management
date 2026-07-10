@@ -23,9 +23,20 @@ export async function getDashboardData() {
     _sum: { amount: true },
   });
 
+  // Get loans balance
+  const loans = await prisma.loan.findMany({
+    where: { userId },
+    select: { loanType: true, balance: true }
+  });
+
+  const borrowedBalance = loans.filter(l => l.loanType === 'BORROWED').reduce((acc, l) => acc + l.balance, 0);
+  const lentBalance = loans.filter(l => l.loanType === 'LENT').reduce((acc, l) => acc + l.balance, 0);
+
   const totalIncome = aggregates.find((a) => a.type === "INCOME")?._sum.amount || 0;
   const totalExpense = aggregates.find((a) => a.type === "EXPENSE")?._sum.amount || 0;
-  const balance = totalIncome - totalExpense;
+  
+  // Total balance includes cash flow from active loans
+  const balance = totalIncome - totalExpense + borrowedBalance - lentBalance;
 
   // 1b. Calculate trends (compared to last month)
   const now = new Date();
@@ -112,7 +123,9 @@ export async function getDashboardData() {
     _sum: { amount: true },
   });
 
-  const categories = await prisma.category.findMany({ where: { userId } });
+  // Fetch categories using the centralized function to ensure seeding happens
+  const { getCategories } = await import('@/app/actions/categories');
+  const categories = await getCategories();
   
   let spendingsBreakdown: { name: string; amount: number; percent: number; colorHex: string }[] = [];
   

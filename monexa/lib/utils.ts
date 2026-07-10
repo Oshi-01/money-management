@@ -28,3 +28,18 @@ export function formatCurrency(amount: number, currencyCode: string = "USD") {
 
   return formatted;
 }
+
+export function getCurrencySymbol(currencyCode: string = "USD") {
+  if (currencyCode === "BDT") return "৳";
+  if (currencyCode === "GBP") return "£";
+  if (currencyCode === "EUR") return "€";
+  
+  // Use Intl as fallback
+  try {
+    const parts = new Intl.NumberFormat("en-US", { style: "currency", currency: currencyCode }).formatToParts(0);
+    const symbolPart = parts.find(p => p.type === "currency");
+    return symbolPart ? symbolPart.value : "$";
+  } catch (e) {
+    return "$";
+  }
+}

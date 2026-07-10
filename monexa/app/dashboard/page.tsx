@@ -7,6 +7,10 @@ import { EnfixSavingsGoals } from "@/components/dashboard/enfix-savings-goals";
 import { EnfixMonthlyBudgets } from "@/components/dashboard/enfix-monthly-budgets";
 import { EnfixMonthlyExpenses } from "@/components/dashboard/enfix-monthly-expenses";
 import { EnfixIncomeExpenseChart } from "@/components/dashboard/enfix-income-expense-chart";
+import { Button } from "@/components/ui/button";
+import { getCategories } from "@/app/actions/categories";
+import { getUserAccounts } from "@/app/actions/accounts";
+import { NewTransactionDialog } from "@/components/transactions/new-transaction-dialog";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +23,12 @@ export default async function DashboardPage() {
   const session = await auth();
 
   // Fetch the dashboard data
+  const [dashboardData, categories, accounts] = await Promise.all([
+    getDashboardData(),
+    getCategories(),
+    getUserAccounts()
+  ]);
+
   const { 
     totalIncome, 
     totalExpense, 
@@ -33,15 +43,23 @@ export default async function DashboardPage() {
     savingsGoals,
     budgets,
     trends
-  } = await getDashboardData();
+  } = dashboardData;
 
   return (
     <div className="w-full flex flex-col gap-10">
       
       {/* Top Header */}
-      <div className="flex flex-col">
-        <h1 className="text-3xl font-bold text-[#1e293b]">Dashboard</h1>
-        <p className="text-gray-500 font-medium mt-1">Welcome Enfix Finance Management</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col">
+          <h1 className="text-3xl font-bold text-[#1e293b]">Dashboard</h1>
+          <p className="text-gray-500 font-medium mt-1">Welcome Enfix Finance Management</p>
+        </div>
+        <NewTransactionDialog 
+          categories={categories} 
+          accounts={accounts} 
+          budgets={budgets} 
+          currency={currency}
+        />
       </div>
 
       {/* Row 1: Stat Cards and Balance Trend */}
@@ -82,7 +100,7 @@ export default async function DashboardPage() {
           <EnfixMonthlyBudgets budgets={budgets} />
         </div>
         <div className="lg:col-span-3 h-full pt-4 lg:pt-0">
-          <EnfixMonthlyExpenses breakdown={spendingsBreakdown} />
+          <EnfixMonthlyExpenses breakdown={spendingsBreakdown} currency={currency} />
         </div>
       </div>
 
