@@ -32,9 +32,9 @@ export default async function TransactionsPage(
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-8">
-      
+
       {/* Header in a white card */}
-      <div className="bg-white rounded-[32px] p-4 sm:p-6 lg:p-8 shadow-sm border border-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="bg-white rounded-4xl p-4 sm:p-6 lg:p-8 shadow-sm border border-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
             <ArrowLeftRight className="h-6 w-6" />
@@ -45,16 +45,16 @@ export default async function TransactionsPage(
           </div>
         </div>
 
-        <NewTransactionDialog 
-          categories={categories} 
-          accounts={accounts} 
-          budgets={budgetData.budgets} 
+        <NewTransactionDialog
+          categories={categories}
+          accounts={accounts}
+          budgets={budgetData.budgets}
           currency={currency}
         />
       </div>
 
       {/* Full Width List */}
-      <div className="bg-white rounded-[32px] p-4 sm:p-6 lg:p-8 shadow-sm border border-gray-50">
+      <div className="bg-white rounded-4xl p-4 sm:p-6 lg:p-8 shadow-sm border border-gray-50">
         <h3 className="text-xl font-bold text-[#1e293b] mb-6">Recent Transactions</h3>
         <TransactionList transactions={transactionsData.transactions} currency={currency} />
       </div>

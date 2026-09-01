@@ -7,16 +7,18 @@ import { useState, useEffect } from "react";
 
 interface EnfixStatCardsProps {
   balance: number;
-  totalIncome: number;
-  totalExpense: number;
   currency: string;
   trends: {
     incomeChange: number;
     expenseChange: number;
     balanceChange: number;
+    totalBalanceChange: number;
     lastMonthIncome: number;
     lastMonthExpense: number;
     lastMonthBalance: number;
+    thisMonthIncome: number;
+    thisMonthExpense: number;
+    thisMonthBalance: number;
   };
   savingsTrend: { month: string; net: number }[];
   incomeTrend: { month: string; income: number }[];
@@ -25,8 +27,6 @@ interface EnfixStatCardsProps {
 
 export function EnfixStatCards({
   balance,
-  totalIncome,
-  totalExpense,
   currency,
   trends,
   savingsTrend,
@@ -41,18 +41,22 @@ export function EnfixStatCards({
 
   const cards = [
     {
+      // All-time cumulative balance. Its % reflects how much that cumulative
+      // total grew this month, relative to what it was before this month.
       title: "Total Balance",
       amount: balance,
-      trendText: `Last month ${formatCurrency(trends.lastMonthBalance, currency).replace(/\.00$/, '')}`,
-      trendPercent: `${Math.abs(trends.balanceChange).toFixed(2)}%`,
-      isPositive: trends.balanceChange >= 0,
+      trendText: `Before this month ${formatCurrency(balance - trends.thisMonthBalance, currency).replace(/\.00$/, '')}`,
+      trendPercent: `${Math.abs(trends.totalBalanceChange).toFixed(2)}%`,
+      isPositive: trends.totalBalanceChange >= 0,
       chartColor: "#10b981", // emerald-500
       data: savingsTrend,
       dataKey: "net"
     },
     {
+      // This period's net cash flow (income - expense), compared to last
+      // period's net cash flow.
       title: "Total Period Change",
-      amount: balance,
+      amount: trends.thisMonthBalance,
       trendText: `Last month ${formatCurrency(trends.lastMonthBalance, currency).replace(/\.00$/, '')}`,
       trendPercent: `${Math.abs(trends.balanceChange).toFixed(2)}%`,
       isPositive: trends.balanceChange >= 0,
@@ -62,7 +66,7 @@ export function EnfixStatCards({
     },
     {
       title: "Total Period Expenses",
-      amount: totalExpense,
+      amount: trends.thisMonthExpense,
       trendText: `Last month ${formatCurrency(trends.lastMonthExpense, currency).replace(/\.00$/, '')}`,
       trendPercent: `${Math.abs(trends.expenseChange).toFixed(2)}%`,
       isPositive: trends.expenseChange <= 0,
@@ -72,7 +76,7 @@ export function EnfixStatCards({
     },
     {
       title: "Total Period Income",
-      amount: totalIncome,
+      amount: trends.thisMonthIncome,
       trendText: `Last month ${formatCurrency(trends.lastMonthIncome, currency).replace(/\.00$/, '')}`,
       trendPercent: `${Math.abs(trends.incomeChange).toFixed(2)}%`,
       isPositive: trends.incomeChange >= 0,

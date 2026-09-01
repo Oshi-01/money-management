@@ -31,10 +31,10 @@ interface NewTransactionDialogProps {
   currency?: string;
 }
 
-export function NewTransactionDialog({ 
-  categories, 
-  accounts, 
-  budgets, 
+export function NewTransactionDialog({
+  categories,
+  accounts,
+  budgets,
   currency = "USD"
 }: NewTransactionDialogProps) {
   const [open, setOpen] = useState(false);
@@ -44,14 +44,14 @@ export function NewTransactionDialog({
       <DialogTrigger render={<Button className="w-full sm:w-auto bg-[#1e293b] hover:bg-[#1e293b]/90 text-white" />}>
         <Plus className="mr-2 h-4 w-4" /> Add Transaction
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px] rounded-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-150 rounded-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Record a New Transaction</DialogTitle>
         </DialogHeader>
-        <TransactionForm 
-          categories={categories} 
-          accounts={accounts} 
-          budgets={budgets} 
+        <TransactionForm
+          categories={categories}
+          accounts={accounts}
+          budgets={budgets}
           currency={currency}
           onSuccess={() => setOpen(false)}
         />

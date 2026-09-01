@@ -29,12 +29,12 @@ export default async function DashboardPage() {
     getUserAccounts()
   ]);
 
-  const { 
-    totalIncome, 
-    totalExpense, 
-    balance, 
-    recentTransactions, 
-    chartData, 
+  const {
+    totalIncome,
+    totalExpense,
+    balance,
+    recentTransactions,
+    chartData,
     currency,
     spendingsBreakdown,
     savingsTrend,
@@ -47,28 +47,26 @@ export default async function DashboardPage() {
 
   return (
     <div className="w-full flex flex-col gap-10">
-      
+
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex flex-col">
           <h1 className="text-3xl font-bold text-[#1e293b]">Dashboard</h1>
           <p className="text-gray-500 font-medium mt-1">Welcome Enfix Finance Management</p>
         </div>
-        <NewTransactionDialog 
-          categories={categories} 
-          accounts={accounts} 
-          budgets={budgets} 
+        <NewTransactionDialog
+          categories={categories}
+          accounts={accounts}
+          budgets={budgets}
           currency={currency}
         />
       </div>
 
       {/* Row 1: Stat Cards and Balance Trend */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-5 xl:col-span-4 h-full min-h-[300px]">
-          <EnfixStatCards 
-            balance={balance} 
-            totalIncome={totalIncome} 
-            totalExpense={totalExpense} 
+        <div className="lg:col-span-5 xl:col-span-4 h-full min-h-75">
+          <EnfixStatCards
+            balance={balance}
             currency={currency}
             trends={trends}
             savingsTrend={savingsTrend}
@@ -76,7 +74,7 @@ export default async function DashboardPage() {
             expenseTrend={expenseTrend}
           />
         </div>
-        <div className="lg:col-span-7 xl:col-span-8 h-full min-h-[300px] pt-4 lg:pt-0">
+        <div className="lg:col-span-7 xl:col-span-8 h-full min-h-75 pt-4 lg:pt-0">
           <EnfixBalanceTrend balance={balance} currency={currency} savingsTrend={savingsTrend} trends={trends} />
         </div>
       </div>
@@ -93,7 +91,7 @@ export default async function DashboardPage() {
 
       {/* Row 3: Monthly Charts and Budgets */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-6 h-full min-h-[350px]">
+        <div className="lg:col-span-6 h-full min-h-87.5">
           <EnfixIncomeExpenseChart data={chartData} currency={currency} />
         </div>
         <div className="lg:col-span-3 h-full">

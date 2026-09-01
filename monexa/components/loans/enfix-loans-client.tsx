@@ -38,8 +38,11 @@ export function EnfixLoansClient({ loans, currency }: { loans: LoanWithRepayment
 
   const selectedLoan = activeLoans.find(l => l.id === selectedLoanId) || activeLoans[0];
 
-  const totalBorrowed = borrowedLoans.filter(l => l.includeInTotal).reduce((sum, loan) => sum + loan.balance, 0);
-  const totalLent = lentLoans.filter(l => l.includeInTotal).reduce((sum, loan) => sum + loan.balance, 0);
+  // "Total Borrowed" / "Total Lent" reflect the current outstanding balance
+  // across every loan of that type (a fully repaid loan already carries a
+  // balance of 0, so it naturally drops out without extra filtering).
+  const totalBorrowed = borrowedLoans.reduce((sum, loan) => sum + loan.balance, 0);
+  const totalLent = lentLoans.reduce((sum, loan) => sum + loan.balance, 0);
   const netOutstanding = totalLent - totalBorrowed;
 
   const getStatusIcon = (status: string) => {
@@ -62,7 +65,7 @@ export function EnfixLoansClient({ loans, currency }: { loans: LoanWithRepayment
     <div className="space-y-6 animate-in fade-in duration-500 pb-8">
 
       {/* Header & Stats in a white card */}
-      <div className="bg-white rounded-[32px] p-8 shadow-sm border border-gray-50">
+      <div className="bg-white rounded-4xl p-8 shadow-sm border border-gray-50">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
@@ -80,7 +83,7 @@ export function EnfixLoansClient({ loans, currency }: { loans: LoanWithRepayment
                 <Plus className="mr-2 h-4 w-4" /> New Record
               </Button>
             } />
-            <DialogContent className="sm:max-w-[600px] rounded-2xl">
+            <DialogContent className="sm:max-w-150 rounded-2xl">
               <DialogHeader>
                 <DialogTitle>Record a New Loan</DialogTitle>
               </DialogHeader>
@@ -126,8 +129,8 @@ export function EnfixLoansClient({ loans, currency }: { loans: LoanWithRepayment
       <div className="flex flex-col lg:flex-row gap-6">
 
         {/* Left List */}
-        <div className="w-full lg:w-[350px] shrink-0 flex flex-col gap-4">
-          <div className="bg-white rounded-[32px] p-4 sm:p-6 shadow-sm border border-gray-50 h-auto lg:h-[600px] flex flex-col">
+        <div className="w-full lg:w-87.5 shrink-0 flex flex-col gap-4">
+          <div className="bg-white rounded-4xl p-4 sm:p-6 shadow-sm border border-gray-50 h-auto lg:h-150 flex flex-col">
 
             <div className="flex bg-gray-50 rounded-full p-1 mb-6">
               <button
@@ -161,8 +164,8 @@ export function EnfixLoansClient({ loans, currency }: { loans: LoanWithRepayment
                       key={loan.id}
                       onClick={() => setSelectedLoanId(loan.id)}
                       className={`w-full text-left p-4 rounded-2xl transition-all border ${isSelected
-                          ? 'bg-indigo-50 border-indigo-100'
-                          : 'bg-white border-gray-100 hover:border-indigo-100 hover:bg-gray-50'
+                        ? 'bg-indigo-50 border-indigo-100'
+                        : 'bg-white border-gray-100 hover:border-indigo-100 hover:bg-gray-50'
                         }`}
                     >
                       <div className="flex justify-between items-start mb-2">
@@ -194,7 +197,7 @@ export function EnfixLoansClient({ loans, currency }: { loans: LoanWithRepayment
         {/* Right Details */}
         <div className="flex-1">
           {selectedLoan ? (
-            <div className="bg-white rounded-[32px] p-4 sm:p-6 lg:p-8 shadow-sm border border-gray-50 h-auto lg:h-[600px] flex flex-col">
+            <div className="bg-white rounded-4xl p-4 sm:p-6 lg:p-8 shadow-sm border border-gray-50 h-auto lg:h-150 flex flex-col">
               <div className="flex justify-between items-start mb-8">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
@@ -215,7 +218,7 @@ export function EnfixLoansClient({ loans, currency }: { loans: LoanWithRepayment
                           <Pencil className="h-4 w-4" />
                         </Button>
                       } />
-                      <DialogContent className="sm:max-w-[600px] rounded-2xl">
+                      <DialogContent className="sm:max-w-95 rounded-2xl">
                         <DialogHeader>
                           <DialogTitle>Edit Loan</DialogTitle>
                         </DialogHeader>
@@ -297,7 +300,7 @@ export function EnfixLoansClient({ loans, currency }: { loans: LoanWithRepayment
 
             </div>
           ) : (
-            <div className="bg-white rounded-[32px] p-4 sm:p-6 lg:p-8 shadow-sm border border-gray-50 h-auto lg:h-[600px] flex flex-col items-center justify-center text-center">
+            <div className="bg-white rounded-4xl p-4 sm:p-6 lg:p-8 shadow-sm border border-gray-50 h-auto lg:h-150 flex flex-col items-center justify-center text-center">
               <Landmark className="w-16 h-16 text-gray-200 mb-4" />
               <h3 className="text-xl font-bold text-[#1e293b]">Select a Loan</h3>
               <p className="text-gray-400 max-w-sm mt-2">

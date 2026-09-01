@@ -68,18 +68,32 @@ export async function getDashboardData() {
   const lastMonthExpense = lastMonthAggregates.find(a => a.type === "EXPENSE")?._sum.amount || 0;
   const lastMonthBalance = (lastMonthIncome + lastMonthBorrowed) - (lastMonthExpense + lastMonthLent);
 
+  // Standard percent-change breaks down when `previous` is negative (it
+  // flips the sign of the result, e.g. going from -1,550 to +30,000 would
+  // read as "-2035%" instead of the huge improvement it actually is).
+  // Dividing by the absolute value keeps the sign of the result meaningful:
+  // positive whenever current > previous, negative whenever current < previous.
   const calculateChange = (current: number, previous: number) => {
-    if (previous === 0) return current > 0 ? 100 : 0;
-    return ((current - previous) / previous) * 100;
+    if (previous === 0) return current === 0 ? 0 : (current > 0 ? 100 : -100);
+    return ((current - previous) / Math.abs(previous)) * 100;
   };
+
+  // Balance is a running cumulative total, so its own "growth" is measured
+  // against what the balance was before this month's activity (not against
+  // last month's period delta, which is a different quantity).
+  const balanceBeforeThisMonth = balance - thisMonthBalance;
 
   const trends = {
     incomeChange: calculateChange(thisMonthIncome, lastMonthIncome),
     expenseChange: calculateChange(thisMonthExpense, lastMonthExpense),
     balanceChange: calculateChange(thisMonthBalance, lastMonthBalance),
+    totalBalanceChange: calculateChange(balance, balanceBeforeThisMonth),
     lastMonthIncome,
     lastMonthExpense,
-    lastMonthBalance
+    lastMonthBalance,
+    thisMonthIncome,
+    thisMonthExpense,
+    thisMonthBalance,
   };
 
   // 2. Get recent 5 transactions

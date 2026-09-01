@@ -22,12 +22,12 @@ export function Sidebar() {
                     href={item.href}
                     className={cn(
                       "group flex h-10 w-10 items-center justify-center rounded-full transition-all duration-200",
-                      isActive 
-                        ? "bg-white/20 text-white" 
+                      isActive
+                        ? "bg-white/20 text-white"
                         : "text-white/60 hover:bg-white/10 hover:text-white"
                     )}
                   >
-                    <item.icon className="h-[22px] w-[22px]" strokeWidth={isActive ? 2.5 : 2} />
+                    <item.icon className="h-5.5 w-5.5" strokeWidth={isActive ? 2.5 : 2} />
                     <span className="sr-only">{item.name}</span>
                   </Link>
                 } />

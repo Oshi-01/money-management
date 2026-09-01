@@ -8,6 +8,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { BudgetForm } from "@/components/budgets/budget-form";
 import { Button } from "@/components/ui/button";
 
+interface EnfixBudgetPeriodData {
+  totalBudget: number;
+  spent: number;
+  lastPeriodSpent: number;
+  isOverBudget: boolean;
+  chart: { month: string; fullMonth: string; spent: number; budget: number }[];
+}
+
 interface EnfixBudgetCategoryData {
   id: string;
   categoryId: string;
@@ -25,7 +33,13 @@ interface EnfixBudgetCategoryData {
     spent: number;
     budget: number;
   }[];
+  periods: {
+    weekly: EnfixBudgetPeriodData;
+    yearly: EnfixBudgetPeriodData;
+  };
 }
+
+type BudgetPeriod = "WEEKLY" | "MONTHLY" | "YEARLY";
 
 interface EnfixBudgetsClientProps {
   budgets: EnfixBudgetCategoryData[];
@@ -44,8 +58,15 @@ const getCategoryIcon = (name: string) => {
   return Wallet;
 };
 
+const PERIOD_LABELS: Record<BudgetPeriod, { previous: string; current: string; previousSub: string; currentSub: string; unit: string }> = {
+  WEEKLY: { previous: "Previous Week", current: "Current Week", previousSub: "Last week's spending", currentSub: "This week's spending", unit: "week" },
+  MONTHLY: { previous: "Previous Period", current: "Current Period", previousSub: "Last month's spending", currentSub: "This month's spending", unit: "month" },
+  YEARLY: { previous: "Previous Year", current: "Current Year", previousSub: "Last year's spending", currentSub: "This year's spending", unit: "year" },
+};
+
 export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories }: EnfixBudgetsClientProps) {
   const [selectedId, setSelectedId] = useState<string | null>(budgets.length > 0 ? budgets[0].id : null);
+  const [activePeriod, setActivePeriod] = useState<BudgetPeriod>("MONTHLY");
 
   const selectedBudget = budgets.find(b => b.id === selectedId) || budgets[0];
 
@@ -77,11 +98,37 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
   }
 
   const Icon = getCategoryIcon(selectedBudget.category.name);
-  const percent = Math.min(Math.round((selectedBudget.spentAmount / selectedBudget.amount) * 100) || 0, 100);
-  const remaining = Math.max(selectedBudget.amount - selectedBudget.spentAmount, 0);
+
+  // Resolve the figures for whichever period tab is active.
+  const periodView = activePeriod === "WEEKLY"
+    ? {
+      totalBudget: selectedBudget.periods.weekly.totalBudget,
+      spent: selectedBudget.periods.weekly.spent,
+      lastPeriodSpent: selectedBudget.periods.weekly.lastPeriodSpent,
+      isOverBudget: selectedBudget.periods.weekly.isOverBudget,
+      history: selectedBudget.periods.weekly.chart,
+    }
+    : activePeriod === "YEARLY"
+    ? {
+      totalBudget: selectedBudget.periods.yearly.totalBudget,
+      spent: selectedBudget.periods.yearly.spent,
+      lastPeriodSpent: selectedBudget.periods.yearly.lastPeriodSpent,
+      isOverBudget: selectedBudget.periods.yearly.isOverBudget,
+      history: selectedBudget.periods.yearly.chart,
+    }
+    : {
+      totalBudget: selectedBudget.amount,
+      spent: selectedBudget.spentAmount,
+      lastPeriodSpent: selectedBudget.lastMonthSpent,
+      isOverBudget: selectedBudget.isOverBudget,
+      history: selectedBudget.history,
+    };
+
+  const percent = Math.min(Math.round((periodView.spent / periodView.totalBudget) * 100) || 0, 100);
+  const remaining = Math.max(periodView.totalBudget - periodView.spent, 0);
 
   // Prepare chart data
-  const chartData = selectedBudget.history.map(h => ({
+  const chartData = periodView.history.map(h => ({
     month: h.month,
     spent: h.spent,
     remaining: Math.max(h.budget - h.spent, 0),
@@ -89,8 +136,9 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
   }));
 
   // Comparative analysis calculations
-  const variance = selectedBudget.spentAmount - selectedBudget.lastMonthSpent;
-  const isVariancePositive = variance > 0; // More spent this month than last month
+  const variance = periodView.spent - periodView.lastPeriodSpent;
+  const isVariancePositive = variance > 0; // More spent this period than the previous one
+  const periodLabels = PERIOD_LABELS[activePeriod];
 
   return (
     <div className="flex flex-col lg:flex-row gap-6 animate-in fade-in duration-500">
@@ -140,14 +188,19 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
 
                 <div className={`w-full h-1.5 rounded-full mb-2 ${isActive ? 'bg-white/30' : 'bg-gray-100'}`}>
                   <div
-                    className={`h-full rounded-full ${isActive ? 'bg-white' : 'bg-emerald-500'}`}
+                    className={`h-full rounded-full ${
+                      isActive ? 'bg-white' : b.isOverBudget ? 'bg-rose-500' : 'bg-emerald-500'
+                    }`}
                     style={{ width: `${bPercent}%` }}
                   />
                 </div>
 
                 <div className="flex justify-between items-center text-[10px] font-medium">
                   <span>{bPercent}%</span>
-                  <span>{b.isOverBudget ? 'Over budget' : 'On track'}</span>
+                  <span className={`flex items-center gap-1 ${b.isOverBudget ? (isActive ? 'text-white' : 'text-rose-500') : ''}`}>
+                    {b.isOverBudget && <AlertCircle className="w-3 h-3" />}
+                    {b.isOverBudget ? 'Over budget' : 'On track'}
+                  </span>
                 </div>
               </div>
             );
@@ -184,19 +237,40 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
               <Download className="w-4 h-4" /> Export
             </button>
             <div className="flex items-center gap-1 bg-white p-1 rounded-full shadow-sm border border-gray-100">
-              <button className="px-4 py-1.5 text-sm font-bold text-gray-500 rounded-full hover:bg-gray-50">Weekly</button>
-              <button className="px-4 py-1.5 text-sm font-bold text-white bg-emerald-600 rounded-full">Monthly</button>
-              <button className="px-4 py-1.5 text-sm font-bold text-gray-500 rounded-full hover:bg-gray-50">Yearly</button>
+              {(["WEEKLY", "MONTHLY", "YEARLY"] as BudgetPeriod[]).map((period) => (
+                <button
+                  key={period}
+                  onClick={() => setActivePeriod(period)}
+                  className={`px-4 py-1.5 text-sm font-bold rounded-full transition-colors ${
+                    activePeriod === period
+                      ? "text-white bg-emerald-600"
+                      : "text-gray-500 hover:bg-gray-50"
+                  }`}
+                >
+                  {period.charAt(0) + period.slice(1).toLowerCase()}
+                </button>
+              ))}
             </div>
           </div>
         </div>
+
+        {/* Over-budget warning */}
+        {periodView.isOverBudget && (
+          <div className="flex items-center gap-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl px-5 py-4">
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            <p className="text-sm font-medium">
+              You've gone {formatCurrency(periodView.spent - periodView.totalBudget, currency)} over your{" "}
+              {periodLabels.unit}ly {selectedBudget.category.name} budget.
+            </p>
+          </div>
+        )}
 
         {/* 3 Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-50 flex items-center justify-between">
             <div>
               <p className="text-xs text-gray-400 font-medium mb-1">Total Budget</p>
-              <h3 className="text-xl font-bold text-[#1e293b]">{formatCurrency(selectedBudget.amount, currency)}</h3>
+              <h3 className="text-xl font-bold text-[#1e293b]">{formatCurrency(periodView.totalBudget, currency)}</h3>
             </div>
             <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
               <DollarSign className="w-4 h-4" />
@@ -206,7 +280,7 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-50 flex items-center justify-between">
             <div>
               <p className="text-xs text-gray-400 font-medium mb-1">Spent</p>
-              <h3 className="text-xl font-bold text-[#1e293b]">{formatCurrency(selectedBudget.spentAmount, currency)}</h3>
+              <h3 className="text-xl font-bold text-[#1e293b]">{formatCurrency(periodView.spent, currency)}</h3>
             </div>
             <div className="w-8 h-8 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center">
               <DollarSign className="w-4 h-4" />
@@ -228,21 +302,21 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-50">
           <h3 className="text-lg font-bold text-[#1e293b] mb-6">Budget Utilization</h3>
           <div className="flex justify-between text-sm font-bold text-gray-400 mb-2">
-            <span>{formatCurrency(selectedBudget.spentAmount, currency)} spent</span>
-            <span>{formatCurrency(selectedBudget.amount, currency)} total</span>
+            <span>{formatCurrency(periodView.spent, currency)} spent</span>
+            <span>{formatCurrency(periodView.totalBudget, currency)} total</span>
           </div>
           <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden mb-2">
             <div
-              className={`h-full rounded-full ${selectedBudget.isOverBudget ? 'bg-rose-500' : 'bg-amber-500'}`}
+              className={`h-full rounded-full ${periodView.isOverBudget ? 'bg-rose-500' : 'bg-amber-500'}`}
               style={{ width: `${percent}%` }}
             />
           </div>
           <div className="flex justify-between text-xs font-bold mt-2">
-            <span className={selectedBudget.isOverBudget ? 'text-rose-500' : 'text-amber-500'}>
+            <span className={periodView.isOverBudget ? 'text-rose-500' : 'text-amber-500'}>
               {percent}% of budget used
             </span>
             <span className="text-gray-400">
-              {selectedBudget.isOverBudget ? '0 remaining' : `${formatCurrency(remaining, currency)} remaining`}
+              {periodView.isOverBudget ? '0 remaining' : `${formatCurrency(remaining, currency)} remaining`}
             </span>
           </div>
         </div>
@@ -289,11 +363,11 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
                     <Wallet className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-gray-700 text-sm">Previous Period</h4>
-                    <p className="text-xs text-gray-400">Last month's spending</p>
+                    <h4 className="font-bold text-gray-700 text-sm">{periodLabels.previous}</h4>
+                    <p className="text-xs text-gray-400">{periodLabels.previousSub}</p>
                   </div>
                 </div>
-                <span className="font-bold text-gray-700">{formatCurrency(selectedBudget.lastMonthSpent, currency)}</span>
+                <span className="font-bold text-gray-700">{formatCurrency(periodView.lastPeriodSpent, currency)}</span>
               </div>
 
               <div className="flex items-center justify-between">
@@ -302,11 +376,11 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
                     <Wallet className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-gray-700 text-sm">Current Period</h4>
-                    <p className="text-xs text-gray-400">This month's spending</p>
+                    <h4 className="font-bold text-gray-700 text-sm">{periodLabels.current}</h4>
+                    <p className="text-xs text-gray-400">{periodLabels.currentSub}</p>
                   </div>
                 </div>
-                <span className="font-bold text-gray-700">{formatCurrency(selectedBudget.spentAmount, currency)}</span>
+                <span className="font-bold text-gray-700">{formatCurrency(periodView.spent, currency)}</span>
               </div>
 
               <div className="flex items-center justify-between">

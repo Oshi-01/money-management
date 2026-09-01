@@ -42,7 +42,7 @@ export function TopNav({ user }: TopNavProps) {
               <span className="sr-only">Open sidebar</span>
             </Button>
           } />
-          <SheetContent side="left" className="w-[100px] p-0 bg-[#eef7f2] border-none flex flex-col items-center py-6 gap-6">
+          <SheetContent side="left" className="w-25 p-0 bg-[#eef7f2] border-none flex flex-col items-center py-6 gap-6">
             <div className="h-12 w-12 bg-emerald-600 rounded-full flex items-center justify-center text-white shadow-sm shrink-0">
               <TrendingUp className="h-6 w-6" />
             </div>

@@ -25,14 +25,14 @@ export function DashboardChart({ data, currency }: DashboardChartProps) {
   if (!mounted) {
     return (
       <Card className="h-full border border-gray-100 shadow-sm flex flex-col rounded-xl overflow-hidden bg-white">
-        <div className="flex items-center justify-center h-[400px]">Loading...</div>
+        <div className="flex items-center justify-center h-100">Loading...</div>
       </Card>
     );
   }
 
   // Generate placeholder data if empty
   const isDataEmpty = data.length === 0;
-  
+
   const chartData = data.map((item) => {
     const d = new Date(item.date);
     return {
@@ -59,7 +59,7 @@ export function DashboardChart({ data, currency }: DashboardChartProps) {
           <span className="hover:text-teal-600 cursor-pointer transition-colors">Year</span>
         </div>
       </CardHeader>
-      
+
       <CardContent className="flex-1 pb-6 pl-0 sm:pl-6 pt-2 relative">
         {isDataEmpty && (
           <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/60 backdrop-blur-[1px]">
@@ -68,21 +68,21 @@ export function DashboardChart({ data, currency }: DashboardChartProps) {
             </p>
           </div>
         )}
-        
-        <div className="h-[300px] w-full mt-4">
+
+        <div className="h-100 w-full mt-4">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }} barSize={16}>
-              <XAxis 
-                dataKey="displayDate" 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{ fontSize: 10, fill: "#9ca3af", fontFamily: "monospace" }} 
-                dy={10} 
+              <XAxis
+                dataKey="displayDate"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 10, fill: "#9ca3af", fontFamily: "monospace" }}
+                dy={10}
                 minTickGap={30}
               />
-              <YAxis 
-                axisLine={false} 
-                tickLine={false} 
+              <YAxis
+                axisLine={false}
+                tickLine={false}
                 tick={{ fontSize: 10, fill: "#9ca3af", fontFamily: "monospace" }}
                 tickFormatter={(val) => {
                   if (val === 0) return "0";
@@ -92,14 +92,14 @@ export function DashboardChart({ data, currency }: DashboardChartProps) {
               />
               <CartesianGrid strokeDasharray="3 3" vertical={true} stroke="#f3f4f6" />
               {!isDataEmpty && (
-                <Tooltip 
+                <Tooltip
                   cursor={{ fill: '#f3f4f6' }}
-                  contentStyle={{ 
-                    backgroundColor: '#111827', 
-                    borderRadius: "6px", 
-                    border: "none", 
+                  contentStyle={{
+                    backgroundColor: '#111827',
+                    borderRadius: "6px",
+                    border: "none",
                     color: '#fff',
-                    boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)" 
+                    boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)"
                   }}
                   itemStyle={{ fontSize: "13px", fontFamily: "monospace" }}
                   labelStyle={{ color: "#9ca3af", marginBottom: "4px", fontSize: "11px", fontWeight: "bold" }}
