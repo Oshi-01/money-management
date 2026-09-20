@@ -26,7 +26,7 @@ export default async function ProfilePage() {
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-[#1e293b]">Profile</h2>
           <p className="text-sm text-gray-400">
-            Welcome Enfix Finance Management
+            Manage your profile and accounts.
           </p>
         </div>
         <div className="text-sm text-gray-400 font-medium flex items-center">

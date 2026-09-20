@@ -117,3 +117,89 @@
     @apply bg-background text-foreground antialiased font-sans;
   }
 }
+
+/* ==========================================================================
+   Dark mode for the dashboard pages.
+
+   Most pages are styled with fixed light colours (bg-white, text-[#1e293b],
+   the gray scale, pastel -50/-100 tints). Rather than flip the whole gray
+   scale (which would fight the components that already have their own
+   `dark:` styles), only those specific classes are remapped here.
+   This block is deliberately outside any @layer so it wins over utilities.
+   ========================================================================== */
+.dark {
+  color-scheme: dark; /* dark date pickers, scrollbars, form controls */
+}
+
+/* Surfaces */
+.dark .bg-white { background-color: var(--card); }
+.dark .bg-white\/50 { background-color: color-mix(in oklab, var(--card) 55%, transparent); }
+.dark .bg-white\/60 { background-color: color-mix(in oklab, var(--card) 65%, transparent); }
+.dark .bg-\[\#eef7f2\] { background-color: var(--background); } /* mobile drawer */
+.dark .bg-gray-50 { background-color: oklch(0.2 0 0); }
+.dark .bg-gray-100 { background-color: oklch(0.24 0 0); }
+.dark .bg-gray-200 { background-color: oklch(0.3 0 0); }
+.dark .hover\:bg-gray-50:hover { background-color: oklch(0.22 0 0); }
+.dark .hover\:bg-gray-100:hover { background-color: oklch(0.26 0 0); }
+.dark .hover\:bg-black\/5:hover { background-color: oklch(1 0 0 / 0.08); }
+
+/* Borders and dividers */
+.dark .border-gray-50,
+.dark .border-gray-100 { border-color: var(--border); }
+.dark .border-gray-200,
+.dark .border-gray-300 { border-color: oklch(0.32 0 0); }
+.dark .divide-gray-50 > :not(:last-child),
+.dark .divide-gray-100 > :not(:last-child) { border-color: var(--border); }
+
+/* Text */
+.dark .text-\[\#1e293b\],
+.dark .text-gray-900,
+.dark .text-gray-800 { color: var(--foreground); }
+.dark .text-gray-700 { color: oklch(0.88 0 0); }
+.dark .text-gray-600 { color: oklch(0.8 0 0); }
+.dark .text-gray-500 { color: oklch(0.72 0 0); }
+.dark .text-gray-300 { color: oklch(0.42 0 0); } /* disabled controls */
+
+/* Pastel tints (icon chips, badges, alerts): translucent in dark mode */
+.dark .bg-emerald-50,
+.dark .bg-emerald-100 { background-color: color-mix(in oklab, var(--color-emerald-500) 16%, transparent); }
+.dark .bg-rose-50,
+.dark .bg-rose-100 { background-color: color-mix(in oklab, var(--color-rose-500) 16%, transparent); }
+.dark .bg-red-50,
+.dark .bg-red-100 { background-color: color-mix(in oklab, var(--color-red-500) 16%, transparent); }
+.dark .bg-amber-50 { background-color: color-mix(in oklab, var(--color-amber-500) 16%, transparent); }
+.dark .bg-yellow-100 { background-color: color-mix(in oklab, var(--color-yellow-500) 16%, transparent); }
+.dark .bg-indigo-50 { background-color: color-mix(in oklab, var(--color-indigo-500) 18%, transparent); }
+.dark .bg-violet-50,
+.dark .bg-purple-100 { background-color: color-mix(in oklab, var(--color-violet-500) 18%, transparent); }
+.dark .bg-cyan-50 { background-color: color-mix(in oklab, var(--color-cyan-500) 16%, transparent); }
+.dark .bg-blue-100 { background-color: color-mix(in oklab, var(--color-blue-500) 16%, transparent); }
+.dark .bg-teal-100 { background-color: color-mix(in oklab, var(--color-teal-500) 16%, transparent); }
+.dark .hover\:bg-emerald-50:hover { background-color: color-mix(in oklab, var(--color-emerald-500) 14%, transparent); }
+.dark .hover\:bg-rose-50:hover,
+.dark .hover\:bg-red-50:hover { background-color: color-mix(in oklab, var(--color-rose-500) 14%, transparent); }
+.dark .border-emerald-100,
+.dark .border-emerald-200 { border-color: color-mix(in oklab, var(--color-emerald-500) 30%, transparent); }
+.dark .border-rose-200,
+.dark .border-red-200 { border-color: color-mix(in oklab, var(--color-rose-500) 30%, transparent); }
+.dark .border-indigo-100 { border-color: color-mix(in oklab, var(--color-indigo-500) 30%, transparent); }
+
+/* Coloured text: a lighter shade so it stays readable on dark surfaces */
+.dark .text-emerald-600,
+.dark .text-emerald-700 { color: var(--color-emerald-400); }
+.dark .text-rose-600,
+.dark .text-rose-700,
+.dark .text-red-600,
+.dark .text-red-700 { color: var(--color-rose-400); }
+.dark .text-indigo-600 { color: var(--color-indigo-400); }
+.dark .text-violet-600 { color: var(--color-violet-400); }
+.dark .text-cyan-600 { color: var(--color-cyan-400); }
+.dark .text-blue-600 { color: var(--color-blue-400); }
+.dark .text-amber-600 { color: var(--color-amber-400); }
+
+/* Recharts tooltips ship with an inline white background */
+.dark .recharts-default-tooltip {
+  background-color: var(--popover) !important;
+  border: 1px solid var(--border) !important;
+}
+.dark .recharts-tooltip-label { color: var(--foreground) !important; }

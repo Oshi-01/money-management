@@ -1,9 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { ArrowLeftRight, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { TransactionForm } from "@/components/transactions/transaction-form";
 
 type Category = {
@@ -21,6 +28,7 @@ type Budget = {
   id: string;
   categoryId: string;
   amount: number;
+  spentAmount?: number;
   category?: { name: string };
 };
 
@@ -41,12 +49,22 @@ export function NewTransactionDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button className="w-full sm:w-auto bg-[#1e293b] hover:bg-[#1e293b]/90 text-white" />}>
+      <DialogTrigger
+        render={<Button className="h-11 w-full rounded-full bg-[#1e293b] px-6 text-white hover:bg-[#1e293b]/90 sm:w-auto" />}
+      >
         <Plus className="mr-2 h-4 w-4" /> Add Transaction
       </DialogTrigger>
-      <DialogContent className="sm:max-w-150 rounded-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Record a New Transaction</DialogTitle>
+      <DialogContent className="max-h-[92vh] overflow-y-auto rounded-3xl p-5 sm:max-w-lg sm:p-6">
+        <DialogHeader className="flex-row items-center gap-3 pr-8">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+            <ArrowLeftRight className="h-5 w-5" />
+          </div>
+          <div className="space-y-0.5">
+            <DialogTitle className="text-lg font-bold text-[#1e293b]">New transaction</DialogTitle>
+            <DialogDescription className="text-sm text-gray-400">
+              Record money coming in or going out.
+            </DialogDescription>
+          </div>
         </DialogHeader>
         <TransactionForm
           categories={categories}

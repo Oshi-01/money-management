@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { LoanType } from "@prisma/client";
+import { parseDateOnly } from "@/lib/dates";
 
 const loanSchema = z.object({
   personName: z.string().min(1, "Person's name is required"),
@@ -55,8 +56,8 @@ export async function createLoan(formData: FormData) {
         loanType: loanType as LoanType,
         principalAmount,
         balance: principalAmount, // Initial balance is the principal amount
-        startDate: new Date(startDate),
-        dueDate: dueDate ? new Date(dueDate) : null,
+        startDate: parseDateOnly(startDate),
+        dueDate: dueDate ? parseDateOnly(dueDate) : null,
         notes,
         includeInTotal: include,
       },
@@ -103,8 +104,8 @@ export async function updateLoan(id: string, formData: FormData) {
         loanType: loanType as LoanType,
         principalAmount,
         balance: newBalance,
-        startDate: new Date(startDate),
-        dueDate: dueDate ? new Date(dueDate) : null,
+        startDate: parseDateOnly(startDate),
+        dueDate: dueDate ? parseDateOnly(dueDate) : null,
         notes,
         includeInTotal: include,
       },
@@ -174,7 +175,7 @@ export async function addRepayment(formData: FormData) {
         data: {
           loanId,
           amount,
-          paymentDate: new Date(paymentDate),
+          paymentDate: parseDateOnly(paymentDate),
           notes,
         },
       });

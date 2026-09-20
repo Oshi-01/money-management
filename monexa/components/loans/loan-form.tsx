@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
+import { toDateInputValue } from "@/lib/dates";
 
 const loanSchema = z.object({
   personName: z.string().min(1, "Person's name is required"),
@@ -49,7 +50,7 @@ export function LoanForm({ initialData, onSuccess }: { initialData?: any, onSucc
       personName: "",
       loanType: "BORROWED",
       principalAmount: 0,
-      startDate: new Date().toISOString().split("T")[0],
+      startDate: toDateInputValue(),
       dueDate: "",
       notes: "",
       includeInTotal: true,

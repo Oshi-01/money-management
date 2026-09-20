@@ -22,7 +22,7 @@ export default async function SavingsPage() {
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-[#1e293b]">Goals</h2>
           <p className="text-sm text-gray-400">
-            Welcome Enfix Finance Management
+            Save toward the things that matter.
           </p>
         </div>
         <div className="text-sm text-gray-400 font-medium">

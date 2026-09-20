@@ -2,6 +2,8 @@
 
 import prisma from "@/lib/prisma";
 import { auth } from "@/auth";
+import { carryOverBudgets } from "@/lib/budget-carry-over";
+import { toMonthStr } from "@/lib/dates";
 
 export async function getDashboardData() {
   const session = await auth();
@@ -255,7 +257,8 @@ export async function getDashboardData() {
   });
 
   // 7. Monthly Budgets
-  const currentMonthStr = new Date().toISOString().slice(0, 7); // YYYY-MM
+  const currentMonthStr = toMonthStr(); // YYYY-MM, local time like the budgets page
+  await carryOverBudgets(userId, currentMonthStr);
   const budgets = await prisma.budget.findMany({
     where: { userId, month: currentMonthStr },
     include: { category: true },

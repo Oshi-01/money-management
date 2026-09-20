@@ -11,14 +11,18 @@ interface CashFlowProps {
     expense: number;
   }[];
   currency: string;
+  /** e.g. "September 2026" - the last month shown. */
+  periodLabel?: string;
 }
 
-export function CashFlowChart({ data, currency }: CashFlowProps) {
+export function CashFlowChart({ data, currency, periodLabel }: CashFlowProps) {
   return (
     <div className="flex flex-col h-full w-full">
       <div className="mb-6">
         <h3 className="text-xl font-bold text-[#1e293b]">Cash Flow</h3>
-        <p className="text-sm text-gray-400">Income vs Expenses over the last 6 months</p>
+        <p className="text-sm text-gray-400">
+          Income vs Expenses over the 6 months {periodLabel ? `ending ${periodLabel}` : "up to now"}
+        </p>
       </div>
       <div className="flex-1 pb-6 pl-0 sm:pl-6 pt-2">
         {data.length === 0 ? (

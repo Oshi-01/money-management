@@ -52,7 +52,7 @@ export default async function DashboardPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex flex-col">
           <h1 className="text-3xl font-bold text-[#1e293b]">Dashboard</h1>
-          <p className="text-gray-500 font-medium mt-1">Welcome Enfix Finance Management</p>
+          <p className="text-gray-500 font-medium mt-1">Your money at a glance.</p>
         </div>
         <NewTransactionDialog
           categories={categories}

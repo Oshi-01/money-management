@@ -4,31 +4,47 @@ import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { createSavingsGoal } from "@/app/actions/savings";
+import { createSavingsGoal, updateSavingsGoal } from "@/app/actions/savings";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
 
 const goalSchema = z.object({
-  title: z.string().min(1, "Title is required"),
+  title: z.string().trim().min(1, "Title is required"),
   targetAmount: z.number().positive("Amount must be positive"),
   deadline: z.string().optional(),
 });
 
 type GoalFormValues = z.infer<typeof goalSchema>;
 
-export function SavingsForm() {
+export type EditableGoal = {
+  id: string;
+  title: string;
+  targetAmount: number;
+  deadline: Date | string | null;
+};
+
+export function SavingsForm({
+  goal,
+  onSuccess,
+}: {
+  /** Pass to edit an existing goal instead of creating one. */
+  goal?: EditableGoal;
+  onSuccess?: () => void;
+}) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const isEdit = !!goal;
 
   const { register, handleSubmit, formState: { errors }, reset } = useForm<GoalFormValues>({
     resolver: zodResolver(goalSchema),
     defaultValues: {
-      title: "",
-      targetAmount: 0,
-      deadline: "",
+      title: goal?.title ?? "",
+      targetAmount: goal?.targetAmount ?? 0,
+      // Stored at 12:00 UTC, so the UTC date is the day the user picked.
+      deadline: goal?.deadline ? new Date(goal.deadline).toISOString().slice(0, 10) : "",
     },
   });
 
@@ -42,17 +58,24 @@ export function SavingsForm() {
         if (value) formData.append(key, value.toString());
       });
 
-      const result = await createSavingsGoal(formData);
+      const result = goal
+        ? await updateSavingsGoal(goal.id, formData)
+        : await createSavingsGoal(formData);
 
       if (result.error) {
         setError(result.error);
       } else {
+        if (isEdit) {
+          onSuccess?.();
+          return;
+        }
         setSuccess("Savings goal created successfully!");
         reset();
-        
+
         setTimeout(() => {
           setSuccess(null);
         }, 3000);
+        onSuccess?.();
       }
     });
   };
@@ -86,13 +109,14 @@ export function SavingsForm() {
         <div className="space-y-2">
           <Label htmlFor="deadline">Target Date (Optional)</Label>
           <Input id="deadline" type="date" {...register("deadline")} />
+          {isEdit && <p className="text-xs text-gray-400">Clear the date to remove the deadline.</p>}
           {errors.deadline && <p className="text-sm text-red-500">{errors.deadline.message}</p>}
         </div>
       </div>
 
       <Button type="submit" className="w-full" disabled={isPending}>
         {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        Create Goal
+        {isEdit ? "Save changes" : "Create Goal"}
       </Button>
     </form>
   );

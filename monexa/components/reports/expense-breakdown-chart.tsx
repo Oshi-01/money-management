@@ -12,19 +12,21 @@ interface ExpenseBreakdownProps {
     value: number;
   }[];
   currency: string;
+  /** e.g. "September 2026" */
+  periodLabel?: string;
 }
 
-export function ExpenseBreakdownChart({ data, currency }: ExpenseBreakdownProps) {
+export function ExpenseBreakdownChart({ data, currency, periodLabel }: ExpenseBreakdownProps) {
   return (
     <div className="flex flex-col h-full w-full">
       <div className="mb-6">
         <h3 className="text-xl font-bold text-[#1e293b]">Expense Breakdown</h3>
-        <p className="text-sm text-gray-400">Where your money went this month</p>
+        <p className="text-sm text-gray-400">Where your money went{periodLabel ? ` in ${periodLabel}` : " this month"}</p>
       </div>
       <div className="flex-1 pb-6">
         {data.length === 0 ? (
           <div className="flex h-[300px] w-full flex-col items-center justify-center text-sm text-gray-400 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
-            <p>No expenses recorded this month.</p>
+            <p>No expenses recorded{periodLabel ? ` in ${periodLabel}` : " this month"}.</p>
           </div>
         ) : (
           <div className="h-[300px] w-full">

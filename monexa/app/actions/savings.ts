@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { parseDateOnly } from "@/lib/dates";
 
 const createGoalSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -60,10 +61,12 @@ export async function getEnfixSavingsData() {
     const enrichedGoals = rawGoals.map(goal => {
       const remaining = Math.max(goal.targetAmount - goal.savedAmount, 0);
       
+      // A deadline that has already passed means 0 months left (not a positive
+      // number, which would spread the remaining amount over months that are gone).
       let monthsLeft = 0;
       if (goal.deadline) {
-        const diffTime = Math.abs(goal.deadline.getTime() - new Date().getTime());
-        monthsLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 30));
+        const diffTime = goal.deadline.getTime() - new Date().getTime();
+        monthsLeft = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 30)));
       }
 
       const monthlyNeed = monthsLeft > 0 ? remaining / monthsLeft : remaining;
@@ -149,7 +152,7 @@ export async function createSavingsGoal(formData: FormData) {
         userId: user.id,
         title: validatedData.data.title,
         targetAmount: validatedData.data.targetAmount,
-        deadline: validatedData.data.deadline ? new Date(validatedData.data.deadline) : null,
+        deadline: validatedData.data.deadline ? parseDateOnly(validatedData.data.deadline) : null,
       },
     });
 
@@ -158,6 +161,39 @@ export async function createSavingsGoal(formData: FormData) {
   } catch (error) {
     console.error("Error creating savings goal:", error);
     return { error: "Failed to create savings goal" };
+  }
+}
+
+/** Edit a goal's title, target amount and deadline (leave the deadline empty to remove it). */
+export async function updateSavingsGoal(id: string, formData: FormData) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) return { error: "Unauthorized" };
+
+    const validated = createGoalSchema.safeParse({
+      title: (formData.get("title") as string | null)?.trim() ?? "",
+      targetAmount: parseFloat(formData.get("targetAmount") as string),
+      deadline: (formData.get("deadline") as string) || undefined,
+    });
+    if (!validated.success) return { error: "Invalid data provided" };
+
+    const goal = await prisma.savingsGoal.findUnique({ where: { id } });
+    if (!goal || goal.userId !== session.user.id) return { error: "Goal not found" };
+
+    await prisma.savingsGoal.update({
+      where: { id },
+      data: {
+        title: validated.data.title,
+        targetAmount: validated.data.targetAmount,
+        deadline: validated.data.deadline ? parseDateOnly(validated.data.deadline) : null,
+      },
+    });
+
+    revalidatePath("/dashboard", "layout");
+    return { success: "Savings goal updated" };
+  } catch (error) {
+    console.error("Error updating savings goal:", error);
+    return { error: "Failed to update savings goal" };
   }
 }
 

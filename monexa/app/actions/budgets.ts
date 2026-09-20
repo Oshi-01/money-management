@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { carryOverBudgets } from "@/lib/budget-carry-over";
 
 const createBudgetSchema = z.object({
   categoryId: z.string().min(1, "Category is required"),
@@ -95,7 +96,10 @@ export async function getEnfixBudgetsData(monthStr: string) {
     if (!user) throw new Error("User not found");
 
     const [year, month] = monthStr.split("-").map(Number);
-    
+
+    // New month? Bring last month's budgets forward (spent restarts at 0).
+    await carryOverBudgets(user.id, monthStr);
+
     // Get all budgets for the requested month
     const currentBudgets = await prisma.budget.findMany({
       where: { userId: user.id, month: monthStr },

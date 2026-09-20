@@ -2,8 +2,10 @@
 
 import prisma from "@/lib/prisma";
 import { auth } from "@/auth";
+import { isValidMonth, monthToDate } from "@/lib/dates";
 
-export async function getReportData() {
+/** `month` ("YYYY-MM") is the month to report on; defaults to the current month. */
+export async function getReportData(month?: string) {
   try {
     const session = await auth();
     if (!session?.user?.email) {
@@ -16,9 +18,11 @@ export async function getReportData() {
 
     if (!user) throw new Error("User not found");
 
-    const now = new Date();
-    
-    // 1. Expense Breakdown for current month
+    // "now" is the selected month: the breakdown covers it, and the cash-flow
+    // chart shows it plus the 5 months before it.
+    const now = isValidMonth(month) ? monthToDate(month) : new Date();
+
+    // 1. Expense Breakdown for the selected month
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
     
@@ -51,7 +55,7 @@ export async function getReportData() {
     const recentTransactions = await prisma.transaction.findMany({
       where: {
         userId: user.id,
-        date: { gte: sixMonthsAgo }
+        date: { gte: sixMonthsAgo, lte: endOfMonth }
       }
     });
 
@@ -80,12 +84,21 @@ export async function getReportData() {
 
     const cashFlow = Object.values(monthlyData);
 
-    return { 
+    // Totals for the selected month (the last entry of the cash-flow series).
+    const selected = cashFlow[cashFlow.length - 1];
+    const summary = {
+      income: selected.income,
+      expense: selected.expense,
+      net: selected.income - selected.expense,
+    };
+
+    return {
       expenseBreakdown,
-      cashFlow
+      cashFlow,
+      summary,
     };
   } catch (error) {
     console.error("Error fetching report data:", error);
-    return { expenseBreakdown: [], cashFlow: [] };
+    return { expenseBreakdown: [], cashFlow: [], summary: { income: 0, expense: 0, net: 0 } };
   }
 }

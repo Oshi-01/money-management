@@ -67,6 +67,12 @@ model Transaction {
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   account     Account? @relation(fields: [accountId], references: [id], onDelete: SetNull)
+
+  // Nearly every page lists a user's transactions newest-first, or filters
+  // them by category / account. Postgres does not index foreign keys itself.
+  @@index([userId, date])
+  @@index([categoryId])
+  @@index([accountId])
 }
 
 model Loan {
@@ -89,6 +95,8 @@ model Loan {
 
   user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   repayments  Repayment[]
+
+  @@index([userId])
 }
 
 enum LoanType {
@@ -111,6 +119,8 @@ model Repayment {
   createdAt   DateTime @default(now())
 
   loan        Loan     @relation(fields: [loanId], references: [id], onDelete: Cascade)
+
+  @@index([loanId])
 }
 
 model Budget {
@@ -124,6 +134,9 @@ model Budget {
   category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@unique([userId, categoryId, month])
+  // The budgets page and carry-over look budgets up by (user, month).
+  @@index([userId, month])
+  @@index([categoryId])
 }
 
 model SavingsGoal {
@@ -135,6 +148,8 @@ model SavingsGoal {
   deadline     DateTime?
 
   user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Account {
@@ -149,4 +164,16 @@ model Account {
 
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions Transaction[]
+
+  @@index([userId])
+}
+
+/// Attempt counters for rate limiting (see lib/rate-limit.ts). Stored in the
+/// database so the limit holds across several server instances.
+model RateLimit {
+  key     String   @id // e.g. "login:email:someone@example.com"
+  count   Int
+  resetAt DateTime // when the current window ends
+
+  @@index([resetAt]) // lets the periodic clean-up find expired rows fast
 }

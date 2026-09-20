@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { SavingsForm } from "@/components/savings/savings-form";
 import { AddFundsForm } from "@/components/savings/add-funds-form";
 import { DeleteGoalButton } from "@/components/savings/delete-goal-button";
+import { EditGoalButton } from "@/components/savings/edit-goal-button";
 
 interface HistoryItem {
   id: string;
@@ -148,7 +149,8 @@ export function EnfixSavingsClient({ goals, currency }: EnfixSavingsClientProps)
                 <AddFundsForm goalId={selectedGoal.id} />
               </DialogContent>
             </Dialog>
-            <DeleteGoalButton id={selectedGoal.id} />
+            <EditGoalButton goal={selectedGoal} />
+            <DeleteGoalButton id={selectedGoal.id} title={selectedGoal.title} />
           </div>
         </div>
 

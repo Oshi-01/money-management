@@ -2,6 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { auth } from "@/auth";
+import { carryOverBudgets } from "@/lib/budget-carry-over";
 
 export async function getEnfixProfileData() {
   try {
@@ -20,6 +21,7 @@ export async function getEnfixProfileData() {
     const mStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const mEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
 
+    await carryOverBudgets(user.id, currentMonthStr);
     const budgets = await prisma.budget.findMany({
       where: { userId: user.id, month: currentMonthStr },
     });

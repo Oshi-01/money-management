@@ -1,6 +1,7 @@
 "use client";
 
-import { Bell, Search, Sun, User as UserIcon, Menu } from "lucide-react";
+import { Bell, Search, Menu } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -54,20 +55,25 @@ export function TopNav({ user }: TopNavProps) {
       </div>
 
       {/* Search Bar */}
-      <div className="flex-1 max-w-md hidden md:flex items-center bg-white rounded-full px-4 py-2 shadow-sm">
+      {/* A plain GET form: submitting opens Transactions filtered by the search text. */}
+      <form
+        action="/dashboard/transactions"
+        role="search"
+        className="flex-1 max-w-md hidden md:flex items-center bg-white rounded-full px-4 py-2 shadow-sm"
+      >
         <Search className="h-4 w-4 text-emerald-600 mr-2" />
         <input
-          type="text"
-          placeholder="Search Here"
+          type="search"
+          name="q"
+          aria-label="Search transactions"
+          placeholder="Search transactions"
           className="bg-transparent border-none outline-none text-sm text-gray-700 w-full placeholder:text-gray-400"
         />
-      </div>
+      </form>
 
       {/* Right Icons */}
       <div className="flex items-center gap-4 ml-auto">
-        <button className="text-gray-500 hover:text-gray-700 transition-colors hidden sm:block">
-          <Sun className="h-5 w-5" />
-        </button>
+        <ThemeToggle />
         <button className="text-gray-500 hover:text-gray-700 transition-colors hidden sm:block">
           <Bell className="h-5 w-5" />
         </button>

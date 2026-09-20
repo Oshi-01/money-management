@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
+import { toDateInputValue } from "@/lib/dates";
 
 const repaymentSchema = z.object({
   loanId: z.string().min(1, "Loan ID is required"),
@@ -35,7 +36,7 @@ export function RepaymentForm({ loanId, maxAmount, onSuccess }: RepaymentFormPro
     defaultValues: {
       loanId,
       amount: maxAmount, // Default to full remaining balance
-      paymentDate: new Date().toISOString().split("T")[0],
+      paymentDate: toDateInputValue(),
       notes: "",
     },
   });

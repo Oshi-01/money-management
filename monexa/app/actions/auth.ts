@@ -5,6 +5,15 @@ import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { AuthError } from "next-auth";
 import { z } from "zod";
+import {
+  consumeRateLimit,
+  formatRetryAfter,
+  getClientIp,
+  HOUR,
+  LOGIN_EMAIL_LIMIT,
+  LOGIN_IP_LIMIT,
+  peekRateLimit,
+} from "@/lib/rate-limit";
 
 const registerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -13,6 +22,12 @@ const registerSchema = z.object({
 });
 
 export async function registerUser(prevState: unknown, formData: FormData) {
+  // Stops scripts from mass-creating accounts.
+  const limit = await consumeRateLimit(`register:ip:${await getClientIp()}`, 10, HOUR);
+  if (!limit.allowed) {
+    return { error: `Too many sign-up attempts. Please try again in ${formatRetryAfter(limit.retryAfterSec)}.` };
+  }
+
   try {
     const data = Object.fromEntries(formData.entries());
     const validatedData = registerSchema.safeParse(data);
@@ -62,6 +77,20 @@ export async function registerUser(prevState: unknown, formData: FormData) {
 }
 
 export async function authenticate(prevState: unknown, formData: FormData) {
+  // The real enforcement is inside auth.ts (authorize). This read-only check
+  // just lets us say WHY the login is refused, instead of "invalid password".
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  if (email) {
+    const [byEmail, byIp] = await Promise.all([
+      peekRateLimit(`login:email:${email}`, LOGIN_EMAIL_LIMIT),
+      peekRateLimit(`login:ip:${await getClientIp()}`, LOGIN_IP_LIMIT),
+    ]);
+    const blocked = !byEmail.allowed ? byEmail : !byIp.allowed ? byIp : null;
+    if (blocked) {
+      return { error: `Too many login attempts. Please try again in ${formatRetryAfter(blocked.retryAfterSec)}.` };
+    }
+  }
+
   try {
     await signIn("credentials", formData);
   } catch (error) {
