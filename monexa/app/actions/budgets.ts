@@ -12,6 +12,27 @@ const createBudgetSchema = z.object({
   month: z.string().regex(/^\d{4}-\d{2}$/, "Invalid month format"), // YYYY-MM
 });
 
+function isUniqueViolation(error: unknown) {
+  return typeof error === "object" && error !== null && "code" in error && (error as { code?: string }).code === "P2002";
+}
+
+function revalidateBudgetViews() {
+  revalidatePath("/dashboard", "layout");
+}
+
+async function isAvailableExpenseCategory(categoryId: string, userId: string) {
+  const category = await prisma.category.findFirst({
+    where: {
+      id: categoryId,
+      type: "EXPENSE",
+      OR: [{ userId }, { userId: null }],
+    },
+    select: { id: true },
+  });
+
+  return !!category;
+}
+
 export async function getBudgetsWithSpending(monthStr: string) {
   try {
     const session = await auth();
@@ -301,6 +322,10 @@ export async function createBudget(formData: FormData) {
       return { error: "Invalid data provided" };
     }
 
+    if (!await isAvailableExpenseCategory(validatedData.data.categoryId, user.id)) {
+      return { error: "Choose a valid expense category" };
+    }
+
     // Check if budget already exists for this category and month
     const existingBudget = await prisma.budget.findUnique({
       where: {
@@ -330,11 +355,54 @@ export async function createBudget(formData: FormData) {
       });
     }
 
-    revalidatePath("/dashboard/budgets");
+    revalidateBudgetViews();
     return { success: "Budget saved successfully" };
   } catch (error) {
+    if (isUniqueViolation(error)) return { error: "A budget already exists for that category and month" };
     console.error("Error creating budget:", error);
     return { error: "Failed to save budget" };
+  }
+}
+
+export async function updateBudget(id: string, formData: FormData) {
+  try {
+    const session = await auth();
+    if (!session?.user?.email) return { error: "Unauthorized" };
+
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      select: { id: true },
+    });
+    if (!user) return { error: "User not found" };
+
+    const validatedData = createBudgetSchema.safeParse({
+      categoryId: formData.get("categoryId"),
+      amount: Number(formData.get("amount")),
+      month: formData.get("month"),
+    });
+    if (!validatedData.success) return { error: "Invalid data provided" };
+
+    const budget = await prisma.budget.findFirst({
+      where: { id, userId: user.id },
+      select: { id: true },
+    });
+    if (!budget) return { error: "Budget not found or unauthorized" };
+
+    if (!await isAvailableExpenseCategory(validatedData.data.categoryId, user.id)) {
+      return { error: "Choose a valid expense category" };
+    }
+
+    await prisma.budget.update({
+      where: { id: budget.id },
+      data: validatedData.data,
+    });
+
+    revalidateBudgetViews();
+    return { success: "Budget updated successfully" };
+  } catch (error) {
+    if (isUniqueViolation(error)) return { error: "A budget already exists for that category and month" };
+    console.error("Error updating budget:", error);
+    return { error: "Failed to update budget" };
   }
 }
 
@@ -348,11 +416,11 @@ export async function deleteBudget(id: string) {
     const user = await prisma.user.findUnique({ where: { email: session.user.email } });
     if (!user) return { error: "User not found" };
 
-    const budget = await prisma.budget.findUnique({
-      where: { id },
+    const budget = await prisma.budget.findFirst({
+      where: { id, userId: user.id },
     });
 
-    if (!budget || budget.userId !== user.id) {
+    if (!budget) {
       return { error: "Budget not found or unauthorized" };
     }
 
@@ -360,7 +428,7 @@ export async function deleteBudget(id: string) {
       where: { id },
     });
 
-    revalidatePath("/dashboard/budgets");
+    revalidateBudgetViews();
     return { success: "Budget deleted successfully" };
   } catch (error) {
     console.error("Error deleting budget:", error);

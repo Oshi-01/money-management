@@ -13,7 +13,7 @@ const toMonthStr = (year: number, monthIndex: number) => {
  * transactions, so "spent" naturally starts again from 0.
  *
  * It does nothing if:
- *  - `monthStr` already has budgets (so edits/deletes are never overwritten),
+ *  - `monthStr` was already initialized (so edits/deletes are never overwritten),
  *  - `monthStr` is in the future,
  *  - the user has no earlier budgets to carry over.
  */
@@ -23,15 +23,32 @@ export async function carryOverBudgets(userId: string, monthStr: string) {
     const currentMonth = toMonthStr(now.getFullYear(), now.getMonth());
     if (monthStr > currentMonth) return;
 
+    const initialized = await prisma.budgetMonthState.findUnique({
+      where: { userId_month: { userId, month: monthStr } },
+      select: { id: true },
+    });
+    if (initialized) return;
+
+    // Backfill state for months created before BudgetMonthState existed.
     const existing = await prisma.budget.count({ where: { userId, month: monthStr } });
-    if (existing > 0) return;
+    if (existing > 0) {
+      await prisma.budgetMonthState.upsert({
+        where: { userId_month: { userId, month: monthStr } },
+        create: { userId, month: monthStr },
+        update: {},
+      });
+      return;
+    }
 
     const latest = await prisma.budget.findFirst({
       where: { userId, month: { lt: monthStr } },
       orderBy: { month: "desc" },
       select: { month: true },
     });
-    if (!latest) return;
+    if (!latest) {
+      await prisma.budgetMonthState.create({ data: { userId, month: monthStr } });
+      return;
+    }
 
     const source = await prisma.budget.findMany({
       where: { userId, month: latest.month },
@@ -49,14 +66,22 @@ export async function carryOverBudgets(userId: string, monthStr: string) {
     }
 
     for (const month of monthsToFill) {
-      await prisma.budget.createMany({
-        data: source.map((b) => ({
-          userId,
-          categoryId: b.categoryId,
-          amount: b.amount,
-          month,
-        })),
-      });
+      await prisma.$transaction([
+        prisma.budget.createMany({
+          data: source.map((b) => ({
+            userId,
+            categoryId: b.categoryId,
+            amount: b.amount,
+            month,
+          })),
+          skipDuplicates: true,
+        }),
+        prisma.budgetMonthState.upsert({
+          where: { userId_month: { userId, month } },
+          create: { userId, month },
+          update: {},
+        }),
+      ]);
     }
   } catch (error) {
     // A concurrent request may have already created these rows (unique

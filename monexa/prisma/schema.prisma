@@ -27,6 +27,7 @@ model User {
   transactions Transaction[]
   loans        Loan[]
   budgets      Budget[]
+  budgetMonths BudgetMonthState[]
   savingsGoals SavingsGoal[]
   accounts     Account[]
 }
@@ -137,6 +138,20 @@ model Budget {
   // The budgets page and carry-over look budgets up by (user, month).
   @@index([userId, month])
   @@index([categoryId])
+}
+
+// Records that a month has already been initialized. This keeps an intentionally
+// emptied month from being populated again by automatic budget carry-over.
+model BudgetMonthState {
+  id            String   @id @default(cuid())
+  userId        String
+  month         String
+  initializedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, month])
+  @@index([userId])
 }
 
 model SavingsGoal {

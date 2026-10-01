@@ -1,12 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { formatCurrency } from "@/lib/utils";
-import { Carrot, TrendingDown, Target, Wallet, Download, Plus, AlertCircle, ShoppingBag, Car, GraduationCap, DollarSign, Shirt } from "lucide-react";
-import { BarChart, Bar, XAxis, ResponsiveContainer, Cell, Tooltip } from "recharts";
+import { Carrot, Target, Wallet, Download, Plus, AlertCircle, ShoppingBag, Car, GraduationCap, DollarSign, Shirt, Pencil, Trash2 } from "lucide-react";
+import { BarChart, Bar, XAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { BudgetForm } from "@/components/budgets/budget-form";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { deleteBudget } from "@/app/actions/budgets";
+import { toast } from "sonner";
+
+interface BudgetCategory {
+  id: string;
+  name: string;
+  type: string;
+}
 
 interface EnfixBudgetPeriodData {
   totalBudget: number;
@@ -45,7 +54,7 @@ interface EnfixBudgetsClientProps {
   budgets: EnfixBudgetCategoryData[];
   currency: string;
   currentMonth: string;
-  categories: any[];
+  categories: BudgetCategory[];
 }
 
 const getCategoryIcon = (name: string) => {
@@ -67,6 +76,9 @@ const PERIOD_LABELS: Record<BudgetPeriod, { previous: string; current: string; p
 export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories }: EnfixBudgetsClientProps) {
   const [selectedId, setSelectedId] = useState<string | null>(budgets.length > 0 ? budgets[0].id : null);
   const [activePeriod, setActivePeriod] = useState<BudgetPeriod>("MONTHLY");
+  const [editing, setEditing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [isDeleting, startDeleteTransition] = useTransition();
 
   const selectedBudget = budgets.find(b => b.id === selectedId) || budgets[0];
 
@@ -77,7 +89,7 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
           <Target className="w-12 h-12 text-emerald-500 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-gray-900 mb-2">No Budgets Yet</h2>
           <p className="text-gray-500 mb-6 max-w-sm">
-            You haven't set up any budgets for this month. Start by adding a new budget limit for your categories.
+            You haven&apos;t set up any budgets for this month. Start by adding a new budget limit for your categories.
           </p>
           <Dialog>
             <DialogTrigger render={
@@ -96,8 +108,6 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
       </div>
     );
   }
-
-  const Icon = getCategoryIcon(selectedBudget.category.name);
 
   // Resolve the figures for whichever period tab is active.
   const periodView = activePeriod === "WEEKLY"
@@ -139,6 +149,20 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
   const variance = periodView.spent - periodView.lastPeriodSpent;
   const isVariancePositive = variance > 0; // More spent this period than the previous one
   const periodLabels = PERIOD_LABELS[activePeriod];
+
+  const confirmDelete = () => {
+    startDeleteTransition(async () => {
+      const result = await deleteBudget(selectedBudget.id);
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+
+      toast.success(result.success);
+      setDeleting(false);
+      setSelectedId(budgets.find((budget) => budget.id !== selectedBudget.id)?.id ?? null);
+    });
+  };
 
   return (
     <div className="flex flex-col lg:flex-row gap-6 animate-in fade-in duration-500">
@@ -229,7 +253,27 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-[#1e293b]">{selectedBudget.category.name}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold text-[#1e293b]">{selectedBudget.category.name}</h1>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={`Edit ${selectedBudget.category.name} budget`}
+                onClick={() => setEditing(true)}
+                className="h-8 w-8 rounded-full text-gray-400 hover:bg-emerald-50 hover:text-emerald-600"
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={`Delete ${selectedBudget.category.name} budget`}
+                onClick={() => setDeleting(true)}
+                className="h-8 w-8 rounded-full text-gray-400 hover:bg-rose-50 hover:text-rose-600"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
             <p className="text-sm text-gray-400">Budget overview and analysis</p>
           </div>
           <div className="flex items-center gap-3">
@@ -259,7 +303,7 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
           <div className="flex items-center gap-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl px-5 py-4">
             <AlertCircle className="w-5 h-5 shrink-0" />
             <p className="text-sm font-medium">
-              You've gone {formatCurrency(periodView.spent - periodView.totalBudget, currency)} over your{" "}
+              You&apos;ve gone {formatCurrency(periodView.spent - periodView.totalBudget, currency)} over your{" "}
               {periodLabels.unit}ly {selectedBudget.category.name} budget.
             </p>
           </div>
@@ -403,6 +447,36 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
         </div>
 
       </div>
+
+      <Dialog open={editing} onOpenChange={setEditing}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Budget</DialogTitle>
+          </DialogHeader>
+          <BudgetForm
+            key={selectedBudget.id}
+            categories={categories}
+            currentMonth={currentMonth}
+            budget={{
+              id: selectedBudget.id,
+              categoryId: selectedBudget.categoryId,
+              amount: selectedBudget.amount,
+              month: currentMonth,
+            }}
+            onSuccess={() => setEditing(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <ConfirmDialog
+        open={deleting}
+        onOpenChange={setDeleting}
+        title={`Delete ${selectedBudget.category.name} budget?`}
+        description={`This removes the budget limit for ${selectedBudget.category.name} in ${currentMonth}. Your transactions will not be deleted.`}
+        confirmLabel="Delete budget"
+        onConfirm={confirmDelete}
+        pending={isDeleting}
+      />
     </div>
   );
 }

@@ -54,7 +54,7 @@ export default async function BudgetsPage(
       )}
 
       <EnfixBudgetsClient
-        budgets={budgets as any} 
+        budgets={budgets}
         currency={currency} 
         currentMonth={selectedMonth}
         categories={categories}

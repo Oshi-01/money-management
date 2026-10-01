@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { createBudget } from "@/app/actions/budgets";
+import { createBudget, updateBudget } from "@/app/actions/budgets";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 const budgetSchema = z.object({
   categoryId: z.string().min(1, "Category is required"),
@@ -28,27 +29,34 @@ type BudgetFormValues = z.infer<typeof budgetSchema>;
 interface BudgetFormProps {
   categories: { id: string; name: string; type: string }[];
   currentMonth: string;
+  budget?: {
+    id: string;
+    categoryId: string;
+    amount: number;
+    month: string;
+  };
+  onSuccess?: () => void;
 }
 
-export function BudgetForm({ categories, currentMonth }: BudgetFormProps) {
+export function BudgetForm({ categories, currentMonth, budget, onSuccess }: BudgetFormProps) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const isEdit = !!budget;
 
   const expenseCategories = categories.filter(c => c.type === "EXPENSE");
 
-  const { register, handleSubmit, setValue, watch, formState: { errors }, reset } = useForm<BudgetFormValues>({
+  const { register, handleSubmit, setValue, control, formState: { errors }, reset } = useForm<BudgetFormValues>({
     resolver: zodResolver(budgetSchema),
     defaultValues: {
-      categoryId: "",
-      amount: 0,
-      month: currentMonth,
+      categoryId: budget?.categoryId ?? "",
+      amount: budget?.amount ?? 0,
+      month: budget?.month ?? currentMonth,
     },
   });
+  const categoryId = useWatch({ control, name: "categoryId" });
 
   const onSubmit = (data: BudgetFormValues) => {
     setError(null);
-    setSuccess(null);
 
     startTransition(async () => {
       const formData = new FormData();
@@ -56,17 +64,16 @@ export function BudgetForm({ categories, currentMonth }: BudgetFormProps) {
         if (value) formData.append(key, value.toString());
       });
 
-      const result = await createBudget(formData);
+      const result = budget
+        ? await updateBudget(budget.id, formData)
+        : await createBudget(formData);
 
       if (result.error) {
         setError(result.error);
-      } else {
-        setSuccess("Budget saved successfully!");
-        reset({ month: currentMonth, amount: 0, categoryId: "" });
-        
-        setTimeout(() => {
-          setSuccess(null);
-        }, 3000);
+      } else if (result.success) {
+        toast.success(result.success);
+        if (!isEdit) reset({ month: currentMonth, amount: 0, categoryId: "" });
+        onSuccess?.();
       }
     });
   };
@@ -78,18 +85,12 @@ export function BudgetForm({ categories, currentMonth }: BudgetFormProps) {
           {error}
         </div>
       )}
-      {success && (
-        <div className="p-3 text-sm text-emerald-500 bg-emerald-100 rounded-md dark:bg-emerald-900/20 dark:text-emerald-400">
-          {success}
-        </div>
-      )}
-
       <div className="space-y-4">
         <div className="space-y-2">
           <Label>Category</Label>
           <Select 
             onValueChange={(val) => setValue("categoryId", val || "")} 
-            value={watch("categoryId")}
+            value={categoryId}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select a category" />
@@ -118,7 +119,7 @@ export function BudgetForm({ categories, currentMonth }: BudgetFormProps) {
 
       <Button type="submit" className="w-full" disabled={isPending}>
         {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        Save Budget
+        {isEdit ? "Save Changes" : "Save Budget"}
       </Button>
     </form>
   );
