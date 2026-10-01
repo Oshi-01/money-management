@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { Toaster } from "@/components/ui/sonner";
 import { TrendingUp } from "lucide-react";
+import { FloatingCalculator } from "@/components/dashboard/floating-calculator";
 
 export const dynamic = "force-dynamic";
 
@@ -44,6 +45,8 @@ export default async function DashboardLayout({
 
       {/* Bottom Nav (Mobile Only) */}
       <BottomNav />
+
+      <FloatingCalculator />
 
       <Toaster />
     </div>
