@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { carryOverBudgets } from "@/lib/budget-carry-over";
+import { toMonthStr } from "@/lib/dates";
 
 const createBudgetSchema = z.object({
   categoryId: z.string().min(1, "Category is required"),
@@ -433,5 +434,43 @@ export async function deleteBudget(id: string) {
   } catch (error) {
     console.error("Error deleting budget:", error);
     return { error: "Failed to delete budget" };
+  }
+}
+
+export async function updateDashboardBudgets(budgetIds: string[]) {
+  const session = await auth();
+  if (!session?.user?.id) return { error: "Unauthorized" };
+
+  const userId = session.user.id;
+  const month = toMonthStr();
+  const uniqueIds = [...new Set(budgetIds)];
+
+  try {
+    const ownedBudgetCount = uniqueIds.length === 0
+      ? 0
+      : await prisma.budget.count({
+          where: { id: { in: uniqueIds }, userId, month },
+        });
+
+    if (ownedBudgetCount !== uniqueIds.length) {
+      return { error: "One or more budgets are invalid" };
+    }
+
+    await prisma.$transaction([
+      prisma.budget.updateMany({
+        where: { userId, month },
+        data: { showOnDashboard: false },
+      }),
+      prisma.budget.updateMany({
+        where: { id: { in: uniqueIds }, userId, month },
+        data: { showOnDashboard: true },
+      }),
+    ]);
+
+    revalidateBudgetViews();
+    return { success: "Dashboard budgets updated" };
+  } catch (error) {
+    console.error("Error updating dashboard budgets:", error);
+    return { error: "Failed to update dashboard budgets" };
   }
 }

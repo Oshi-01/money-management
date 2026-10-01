@@ -73,6 +73,7 @@ export async function carryOverBudgets(userId: string, monthStr: string) {
             categoryId: b.categoryId,
             amount: b.amount,
             month,
+            showOnDashboard: b.showOnDashboard,
           })),
           skipDuplicates: true,
         }),

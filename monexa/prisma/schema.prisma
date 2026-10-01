@@ -152,6 +152,7 @@ model Budget {
   categoryId String
   month      String   // Format: YYYY-MM
   amount     Float
+  showOnDashboard Boolean @default(false)
 
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)

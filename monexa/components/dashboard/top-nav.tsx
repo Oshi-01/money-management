@@ -13,10 +13,11 @@ import {
   DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu";
 import { logOut } from "@/app/actions/auth";
-import { Sheet, SheetContent, SheetHeader, SheetTrigger } from "@/components/ui/sheet";
-import { useState } from "react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { type FormEvent, useState } from "react";
 import { TrendingUp } from "lucide-react";
 import { Sidebar } from "./sidebar";
+import { useRouter } from "next/navigation";
 
 interface TopNavProps {
   user?: {
@@ -28,6 +29,8 @@ interface TopNavProps {
 
 export function TopNav({ user }: TopNavProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const router = useRouter();
   const initials = user?.name
     ? user.name.substring(0, 2).toUpperCase()
     : user?.email?.substring(0, 2).toUpperCase() || "US";
@@ -55,18 +58,24 @@ export function TopNav({ user }: TopNavProps) {
       </div>
 
       {/* Search Bar */}
-      {/* A plain GET form: submitting opens Transactions filtered by the search text. */}
       <form
-        action="/dashboard/transactions"
+        onSubmit={(event: FormEvent<HTMLFormElement>) => {
+          event.preventDefault();
+          const query = search.trim();
+          router.push(query ? `/dashboard/transactions?q=${encodeURIComponent(query)}` : "/dashboard/transactions");
+        }}
         role="search"
         className="flex-1 max-w-md hidden md:flex items-center bg-white rounded-full px-4 py-2 shadow-sm"
       >
-        <Search className="h-4 w-4 text-emerald-600 mr-2" />
+        <button type="submit" aria-label="Search transactions" className="mr-2 rounded-full text-emerald-600 hover:text-emerald-700">
+          <Search className="h-4 w-4" />
+        </button>
         <input
           type="search"
-          name="q"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
           aria-label="Search transactions"
-          placeholder="Search transactions"
+          placeholder="Search transactions by description, notes or category"
           className="bg-transparent border-none outline-none text-sm text-gray-700 w-full placeholder:text-gray-400"
         />
       </form>

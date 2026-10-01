@@ -259,17 +259,34 @@ export async function getDashboardData() {
   // 7. Monthly Budgets
   const currentMonthStr = toMonthStr(); // YYYY-MM, local time like the budgets page
   await carryOverBudgets(userId, currentMonthStr);
-  const budgets = await prisma.budget.findMany({
-    where: { userId, month: currentMonthStr },
-    include: { category: true },
-    take: 4,
-  });
+  const [budgets, currentMonthExpenses] = await Promise.all([
+    prisma.budget.findMany({
+      where: { userId, month: currentMonthStr },
+      include: { category: true },
+      orderBy: { amount: "desc" },
+    }),
+    prisma.transaction.groupBy({
+      by: ["categoryId"],
+      where: {
+        userId,
+        type: "EXPENSE",
+        date: {
+          gte: firstDayThisMonth,
+          lt: new Date(now.getFullYear(), now.getMonth() + 1, 1),
+        },
+      },
+      _sum: { amount: true },
+    }),
+  ]);
+
+  const currentMonthSpent = new Map(
+    currentMonthExpenses.map((expense) => [expense.categoryId, expense._sum.amount || 0]),
+  );
 
   const budgetsWithSpent = budgets.map(b => {
-    const spent = spendingsBreakdown.find(s => s.name === b.category.name)?.amount || 0;
     return {
       ...b,
-      spent
+      spent: currentMonthSpent.get(b.categoryId) || 0,
     };
   });
 

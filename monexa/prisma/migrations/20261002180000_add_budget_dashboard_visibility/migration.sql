@@ -1,0 +1,2 @@
+ALTER TABLE "Budget"
+ADD COLUMN "showOnDashboard" BOOLEAN NOT NULL DEFAULT false;

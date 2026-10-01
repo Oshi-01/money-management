@@ -1,4 +1,3 @@
-import { auth } from "@/auth";
 import { getDashboardData } from "@/app/actions/dashboard";
 import { EnfixStatCards } from "@/components/dashboard/enfix-stat-cards";
 import { EnfixBalanceTrend } from "@/components/dashboard/enfix-balance-trend";
@@ -7,7 +6,6 @@ import { EnfixSavingsGoals } from "@/components/dashboard/enfix-savings-goals";
 import { EnfixMonthlyBudgets } from "@/components/dashboard/enfix-monthly-budgets";
 import { EnfixMonthlyExpenses } from "@/components/dashboard/enfix-monthly-expenses";
 import { EnfixIncomeExpenseChart } from "@/components/dashboard/enfix-income-expense-chart";
-import { Button } from "@/components/ui/button";
 import { getCategories } from "@/app/actions/categories";
 import { getUserAccounts } from "@/app/actions/accounts";
 import { NewTransactionDialog } from "@/components/transactions/new-transaction-dialog";
@@ -20,8 +18,6 @@ export const metadata = {
 };
 
 export default async function DashboardPage() {
-  const session = await auth();
-
   // Fetch the dashboard data
   const [dashboardData, categories, accounts] = await Promise.all([
     getDashboardData(),
@@ -30,8 +26,6 @@ export default async function DashboardPage() {
   ]);
 
   const {
-    totalIncome,
-    totalExpense,
     balance,
     recentTransactions,
     chartData,
@@ -91,11 +85,15 @@ export default async function DashboardPage() {
 
       {/* Row 3: Monthly Charts and Budgets */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-6 h-full min-h-87.5">
+        <div className="lg:col-span-5 h-full min-h-87.5">
           <EnfixIncomeExpenseChart data={chartData} currency={currency} />
         </div>
-        <div className="lg:col-span-3 h-full">
-          <EnfixMonthlyBudgets budgets={budgets} />
+        <div className="lg:col-span-4 h-full">
+          <EnfixMonthlyBudgets
+            budgets={budgets}
+            categories={categories}
+            currency={currency}
+          />
         </div>
         <div className="lg:col-span-3 h-full pt-4 lg:pt-0">
           <EnfixMonthlyExpenses breakdown={spendingsBreakdown} currency={currency} />
