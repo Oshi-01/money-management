@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { createLoan, updateLoan } from "@/app/actions/loans";
@@ -31,12 +31,23 @@ const loanSchema = z.object({
 
 type LoanFormValues = z.infer<typeof loanSchema>;
 
-export function LoanForm({ initialData, onSuccess }: { initialData?: any, onSuccess?: () => void }) {
+type EditableLoan = {
+  id: string;
+  personName: string;
+  loanType: "BORROWED" | "LENT";
+  principalAmount: number;
+  startDate: Date | string;
+  dueDate: Date | string | null;
+  notes: string | null;
+  includeInTotal: boolean;
+};
+
+export function LoanForm({ initialData, onSuccess }: { initialData?: EditableLoan, onSuccess?: () => void }) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  const { register, handleSubmit, setValue, watch, formState: { errors }, reset } = useForm<LoanFormValues>({
+  const { register, handleSubmit, setValue, control, formState: { errors }, reset } = useForm<LoanFormValues>({
     resolver: zodResolver(loanSchema),
     defaultValues: initialData ? {
       personName: initialData.personName,
@@ -56,6 +67,7 @@ export function LoanForm({ initialData, onSuccess }: { initialData?: any, onSucc
       includeInTotal: true,
     },
   });
+  const loanType = useWatch({ control, name: "loanType" });
 
   const onSubmit = (data: LoanFormValues) => {
     setError(null);
@@ -108,10 +120,12 @@ export function LoanForm({ initialData, onSuccess }: { initialData?: any, onSucc
           <Label>Loan Type</Label>
           <Select 
             onValueChange={(val) => { if (val) setValue("loanType", val as "BORROWED" | "LENT") }} 
-            value={watch("loanType") || "BORROWED"}
+            value={loanType || "BORROWED"}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select type" />
+              <SelectValue placeholder="Select type">
+                {loanType === "LENT" ? "I Lent (Given)" : "I Borrowed (Taken)"}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="BORROWED">I Borrowed (Taken)</SelectItem>

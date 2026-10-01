@@ -96,6 +96,7 @@ model Loan {
 
   user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   repayments  Repayment[]
+  activities  LoanActivity[]
 
   @@index([userId])
 }
@@ -109,6 +110,27 @@ enum LoanStatus {
   ACTIVE
   PAID
   OVERDUE
+}
+
+enum LoanActivityType {
+  CREATED
+  ADDITION
+  ADJUSTMENT
+}
+
+model LoanActivity {
+  id           String           @id @default(cuid())
+  loanId       String
+  type         LoanActivityType
+  amountDelta  Float
+  balanceAfter Float
+  activityDate DateTime
+  notes        String?
+  createdAt    DateTime         @default(now())
+
+  loan Loan @relation(fields: [loanId], references: [id], onDelete: Cascade)
+
+  @@index([loanId, activityDate])
 }
 
 model Repayment {

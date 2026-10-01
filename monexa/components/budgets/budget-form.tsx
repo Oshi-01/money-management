@@ -54,6 +54,7 @@ export function BudgetForm({ categories, currentMonth, budget, onSuccess }: Budg
     },
   });
   const categoryId = useWatch({ control, name: "categoryId" });
+  const selectedCategoryName = expenseCategories.find((category) => category.id === categoryId)?.name;
 
   const onSubmit = (data: BudgetFormValues) => {
     setError(null);
@@ -93,7 +94,7 @@ export function BudgetForm({ categories, currentMonth, budget, onSuccess }: Budg
             value={categoryId}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select a category" />
+              <SelectValue placeholder="Select a category">{selectedCategoryName}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               {expenseCategories.map((cat) => (

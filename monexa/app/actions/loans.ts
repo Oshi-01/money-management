@@ -24,7 +24,10 @@ export async function getLoans() {
   const loans = await prisma.loan.findMany({
     where: { userId: session.user.id },
     orderBy: { createdAt: "desc" },
-    include: { repayments: true },
+    include: {
+      repayments: { orderBy: { paymentDate: "desc" } },
+      activities: { orderBy: [{ activityDate: "desc" }, { createdAt: "desc" }] },
+    },
   });
 
   return loans;
@@ -33,6 +36,7 @@ export async function getLoans() {
 export async function createLoan(formData: FormData) {
   const session = await auth();
   if (!session?.user?.id) return { error: "Unauthorized" };
+  const userId = session.user.id;
 
   try {
     const data = Object.fromEntries(formData.entries());
@@ -49,21 +53,34 @@ export async function createLoan(formData: FormData) {
 
     const { personName, loanType, principalAmount, startDate, dueDate, notes, includeInTotal: include } = validated.data;
 
-    await prisma.loan.create({
-      data: {
-        userId: session.user.id,
-        personName,
-        loanType: loanType as LoanType,
-        principalAmount,
-        balance: principalAmount, // Initial balance is the principal amount
-        startDate: parseDateOnly(startDate),
-        dueDate: dueDate ? parseDateOnly(dueDate) : null,
-        notes,
-        includeInTotal: include,
-      },
+    await prisma.$transaction(async (tx) => {
+      const loan = await tx.loan.create({
+        data: {
+          userId,
+          personName,
+          loanType: loanType as LoanType,
+          principalAmount,
+          balance: principalAmount,
+          startDate: parseDateOnly(startDate),
+          dueDate: dueDate ? parseDateOnly(dueDate) : null,
+          notes,
+          includeInTotal: include,
+        },
+      });
+
+      await tx.loanActivity.create({
+        data: {
+          loanId: loan.id,
+          type: "CREATED",
+          amountDelta: principalAmount,
+          balanceAfter: principalAmount,
+          activityDate: parseDateOnly(startDate),
+          notes: notes || null,
+        },
+      });
     });
 
-    revalidatePath("/dashboard/loans");
+    revalidatePath("/dashboard", "layout");
     return { success: "Loan created successfully" };
   } catch (error) {
     console.error("Failed to create loan", error);
@@ -74,10 +91,11 @@ export async function createLoan(formData: FormData) {
 export async function updateLoan(id: string, formData: FormData) {
   const session = await auth();
   if (!session?.user?.id) return { error: "Unauthorized" };
+  const userId = session.user.id;
 
   try {
     const loan = await prisma.loan.findUnique({ where: { id } });
-    if (!loan || loan.userId !== session.user.id) {
+    if (!loan || loan.userId !== userId) {
       return { error: "Loan not found" };
     }
 
@@ -96,22 +114,45 @@ export async function updateLoan(id: string, formData: FormData) {
     // Calculate new balance based on the difference in principal amount
     const principalDelta = principalAmount - loan.principalAmount;
     const newBalance = loan.balance + principalDelta;
+    if (newBalance < 0) {
+      return { error: "Principal cannot be lower than the amount already repaid" };
+    }
 
-    await prisma.loan.update({
-      where: { id },
-      data: {
-        personName,
-        loanType: loanType as LoanType,
-        principalAmount,
-        balance: newBalance,
-        startDate: parseDateOnly(startDate),
-        dueDate: dueDate ? parseDateOnly(dueDate) : null,
-        notes,
-        includeInTotal: include,
-      },
+    await prisma.$transaction(async (tx) => {
+      await tx.loan.update({
+        where: { id },
+        data: {
+          personName,
+          loanType: loanType as LoanType,
+          principalAmount,
+          balance: newBalance,
+          status: newBalance === 0
+            ? "PAID"
+            : loan.status === "PAID" || principalDelta !== 0
+              ? "ACTIVE"
+              : loan.status,
+          startDate: parseDateOnly(startDate),
+          dueDate: dueDate ? parseDateOnly(dueDate) : null,
+          notes,
+          includeInTotal: include,
+        },
+      });
+
+      if (principalDelta !== 0) {
+        await tx.loanActivity.create({
+          data: {
+            loanId: id,
+            type: "ADJUSTMENT",
+            amountDelta: principalDelta,
+            balanceAfter: newBalance,
+            activityDate: new Date(),
+            notes: principalDelta > 0 ? "Principal increased while editing" : "Principal reduced while editing",
+          },
+        });
+      }
     });
 
-    revalidatePath("/dashboard/loans");
+    revalidatePath("/dashboard", "layout");
     return { success: "Loan updated successfully" };
   } catch (error) {
     console.error("Failed to update loan", error);
@@ -122,16 +163,17 @@ export async function updateLoan(id: string, formData: FormData) {
 export async function deleteLoan(id: string) {
   const session = await auth();
   if (!session?.user?.id) return { error: "Unauthorized" };
+  const userId = session.user.id;
 
   try {
     const loan = await prisma.loan.findUnique({ where: { id } });
-    if (!loan || loan.userId !== session.user.id) {
+    if (!loan || loan.userId !== userId) {
       return { error: "Loan not found" };
     }
 
     await prisma.loan.delete({ where: { id } });
     
-    revalidatePath("/dashboard/loans");
+    revalidatePath("/dashboard", "layout");
     return { success: "Loan deleted" };
   } catch (error) {
     console.error("Failed to delete loan", error);
@@ -146,9 +188,64 @@ const repaymentSchema = z.object({
   notes: z.string().optional(),
 });
 
+const additionalAmountSchema = z.object({
+  loanId: z.string().min(1, "Loan ID is required"),
+  amount: z.coerce.number().positive("Amount must be positive"),
+  activityDate: z.string().min(1, "Date is required"),
+  notes: z.string().optional(),
+});
+
+export async function addLoanAmount(formData: FormData) {
+  const session = await auth();
+  if (!session?.user?.id) return { error: "Unauthorized" };
+  const userId = session.user.id;
+
+  try {
+    const validated = additionalAmountSchema.safeParse(Object.fromEntries(formData.entries()));
+    if (!validated.success) return { error: "Invalid data" };
+
+    const { loanId, amount, activityDate, notes } = validated.data;
+
+    await prisma.$transaction(async (tx) => {
+      const loan = await tx.loan.findFirst({
+        where: { id: loanId, userId },
+      });
+      if (!loan) throw new Error("LOAN_NOT_FOUND");
+
+      const updated = await tx.loan.update({
+        where: { id: loanId },
+        data: {
+          principalAmount: { increment: amount },
+          balance: { increment: amount },
+          status: "ACTIVE",
+        },
+      });
+
+      await tx.loanActivity.create({
+        data: {
+          loanId,
+          type: "ADDITION",
+          amountDelta: amount,
+          balanceAfter: updated.balance,
+          activityDate: parseDateOnly(activityDate),
+          notes: notes || null,
+        },
+      });
+    });
+
+    revalidatePath("/dashboard", "layout");
+    return { success: "Additional amount recorded" };
+  } catch (error) {
+    if (error instanceof Error && error.message === "LOAN_NOT_FOUND") return { error: "Loan not found" };
+    console.error("Failed to add loan amount", error);
+    return { error: "Failed to add amount" };
+  }
+}
+
 export async function addRepayment(formData: FormData) {
   const session = await auth();
   if (!session?.user?.id) return { error: "Unauthorized" };
+  const userId = session.user.id;
 
   try {
     const data = Object.fromEntries(formData.entries());
@@ -161,7 +258,7 @@ export async function addRepayment(formData: FormData) {
     const { loanId, amount, paymentDate, notes } = validated.data;
 
     const loan = await prisma.loan.findUnique({ where: { id: loanId } });
-    if (!loan || loan.userId !== session.user.id) {
+    if (!loan || loan.userId !== userId) {
       return { error: "Loan not found" };
     }
 
@@ -191,7 +288,7 @@ export async function addRepayment(formData: FormData) {
       });
     });
 
-    revalidatePath("/dashboard/loans");
+    revalidatePath("/dashboard", "layout");
     return { success: "Repayment recorded successfully" };
   } catch (error) {
     console.error("Failed to add repayment", error);

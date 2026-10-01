@@ -8,22 +8,33 @@ import {
   ArrowUpRight,
   HandCoins,
   Plus,
-  MoreVertical,
   Calendar,
   CheckCircle2,
   Clock,
   AlertCircle,
-  Pencil
+  Pencil,
+  History,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { LoanForm } from "./loan-form";
-import { Loan, Repayment } from "@prisma/client";
-import { Progress } from "@/components/ui/progress";
+import { Loan, LoanActivity, Repayment } from "@prisma/client";
 import { RepaymentForm } from "./repayment-form";
+import { AddLoanAmountForm } from "./add-loan-amount-form";
 
 type LoanWithRepayments = Loan & {
   repayments: Repayment[];
+  activities: LoanActivity[];
+};
+
+type TimelineItem = {
+  id: string;
+  date: Date;
+  recordedAt: Date;
+  label: string;
+  notes: string | null;
+  amountDelta: number;
+  balanceAfter: number | null;
 };
 
 export function EnfixLoansClient({ loans, currency }: { loans: LoanWithRepayments[], currency: string }) {
@@ -31,12 +42,59 @@ export function EnfixLoansClient({ loans, currency }: { loans: LoanWithRepayment
   const [activeTab, setActiveTab] = useState<"BORROWED" | "LENT">("BORROWED");
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isAddAmountDialogOpen, setIsAddAmountDialogOpen] = useState(false);
 
   const borrowedLoans = loans.filter(l => l.loanType === "BORROWED");
   const lentLoans = loans.filter(l => l.loanType === "LENT");
   const activeLoans = activeTab === "BORROWED" ? borrowedLoans : lentLoans;
 
   const selectedLoan = activeLoans.find(l => l.id === selectedLoanId) || activeLoans[0];
+
+  const timeline: TimelineItem[] = selectedLoan ? (() => {
+    const items: TimelineItem[] = [
+      ...selectedLoan.activities.map((activity) => ({
+        id: activity.id,
+        date: new Date(activity.activityDate),
+        recordedAt: new Date(activity.createdAt),
+        label: activity.type === "CREATED"
+          ? "Loan started"
+          : activity.type === "ADDITION"
+            ? selectedLoan.loanType === "BORROWED" ? "Borrowed more" : "Lent more"
+            : activity.amountDelta >= 0 ? "Amount increased" : "Amount reduced",
+        notes: activity.notes,
+        amountDelta: activity.amountDelta,
+        balanceAfter: activity.balanceAfter,
+      })),
+      ...selectedLoan.repayments.map((repayment) => ({
+        id: repayment.id,
+        date: new Date(repayment.paymentDate),
+        recordedAt: new Date(repayment.createdAt),
+        label: selectedLoan.loanType === "BORROWED" ? "You repaid" : "Repayment received",
+        notes: repayment.notes,
+        amountDelta: -repayment.amount,
+        balanceAfter: null,
+      })),
+      ...(selectedLoan.activities.some((activity) => activity.type === "CREATED") ? [] : [{
+        id: `created-${selectedLoan.id}`,
+        date: new Date(selectedLoan.startDate),
+        recordedAt: new Date(selectedLoan.createdAt),
+        label: "Loan started",
+        notes: selectedLoan.notes,
+        amountDelta: selectedLoan.principalAmount
+          - selectedLoan.activities.reduce((sum, activity) => sum + activity.amountDelta, 0),
+        balanceAfter: null,
+      }]),
+    ].sort((a, b) => {
+      const dateDifference = a.date.getTime() - b.date.getTime();
+      return dateDifference || a.recordedAt.getTime() - b.recordedAt.getTime();
+    });
+
+    let runningBalance = 0;
+    return items.map((item) => {
+      runningBalance += item.amountDelta;
+      return { ...item, balanceAfter: Math.max(runningBalance, 0) };
+    }).reverse();
+  })() : [];
 
   // "Total Borrowed" / "Total Lent" reflect the current outstanding balance
   // across every loan of that type (a fully repaid loan already carries a
@@ -225,6 +283,25 @@ export function EnfixLoansClient({ loans, currency }: { loans: LoanWithRepayment
                         <LoanForm initialData={selectedLoan} onSuccess={() => setIsEditDialogOpen(false)} />
                       </DialogContent>
                     </Dialog>
+                    <Dialog open={isAddAmountDialogOpen} onOpenChange={setIsAddAmountDialogOpen}>
+                      <DialogTrigger render={
+                        <Button variant="outline" className="h-8 rounded-full px-4 text-xs font-bold">
+                          <Plus className="mr-1.5 h-3.5 w-3.5" /> Add Amount
+                        </Button>
+                      } />
+                      <DialogContent className="sm:max-w-md rounded-2xl">
+                        <DialogHeader>
+                          <DialogTitle>
+                            Add {selectedLoan.loanType === "BORROWED" ? "Borrowed" : "Lent"} Amount
+                          </DialogTitle>
+                        </DialogHeader>
+                        <AddLoanAmountForm
+                          loanId={selectedLoan.id}
+                          loanType={selectedLoan.loanType}
+                          onSuccess={() => setIsAddAmountDialogOpen(false)}
+                        />
+                      </DialogContent>
+                    </Dialog>
                   </div>
                   {selectedLoan.notes && <p className="text-sm text-gray-400 mt-1">{selectedLoan.notes}</p>}
                 </div>
@@ -247,7 +324,10 @@ export function EnfixLoansClient({ loans, currency }: { loans: LoanWithRepayment
               </div>
 
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-[#1e293b]">Repayment History</h3>
+                <div className="flex items-center gap-2">
+                  <History className="h-4 w-4 text-indigo-500" />
+                  <h3 className="font-bold text-[#1e293b]">Activity History</h3>
+                </div>
                 {selectedLoan.status !== "PAID" && (
                   <Dialog>
                     <DialogTrigger render={
@@ -265,31 +345,36 @@ export function EnfixLoansClient({ loans, currency }: { loans: LoanWithRepayment
                 )}
               </div>
 
-              <div className="flex-1 overflow-y-auto scrollbar-thin border border-gray-100 rounded-2xl">
-                {selectedLoan.repayments.length === 0 ? (
+              <div className="flex-1 overflow-auto scrollbar-thin border border-gray-100 rounded-2xl">
+                {timeline.length === 0 ? (
                   <div className="p-8 text-center text-sm text-gray-400">
-                    No repayments recorded yet.
+                    No activity recorded yet.
                   </div>
                 ) : (
                   <table className="w-full text-sm">
                     <thead className="bg-gray-50 sticky top-0">
                       <tr>
                         <th className="text-left py-3 px-4 text-gray-500 font-medium">Date</th>
-                        <th className="text-left py-3 px-4 text-gray-500 font-medium">Amount</th>
-                        <th className="text-left py-3 px-4 text-gray-500 font-medium">Notes</th>
+                        <th className="text-left py-3 px-4 text-gray-500 font-medium">Activity</th>
+                        <th className="text-right py-3 px-4 text-gray-500 font-medium">Change</th>
+                        <th className="text-right py-3 px-4 text-gray-500 font-medium">Balance After</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                      {selectedLoan.repayments.map((r, i) => (
-                        <tr key={i} className="hover:bg-gray-50 transition-colors">
+                      {timeline.map((item) => (
+                        <tr key={item.id} className="hover:bg-gray-50 transition-colors">
                           <td className="py-3 px-4 font-medium text-[#1e293b]">
-                            {new Date(r.paymentDate).toLocaleDateString()}
+                            {item.date.toLocaleDateString()}
                           </td>
-                          <td className="py-3 px-4 font-bold text-emerald-600">
-                            {formatCurrency(r.amount, currency)}
+                          <td className="py-3 px-4">
+                            <p className="font-medium text-[#1e293b]">{item.label}</p>
+                            {item.notes && <p className="mt-0.5 text-xs text-gray-400">{item.notes}</p>}
                           </td>
-                          <td className="py-3 px-4 text-gray-500">
-                            {r.notes || '-'}
+                          <td className={`py-3 px-4 text-right font-bold ${item.amountDelta >= 0 ? "text-rose-600" : "text-emerald-600"}`}>
+                            {item.amountDelta >= 0 ? "+" : "-"}{formatCurrency(Math.abs(item.amountDelta), currency)}
+                          </td>
+                          <td className="py-3 px-4 text-right font-medium text-gray-500">
+                            {item.balanceAfter === null ? "—" : formatCurrency(item.balanceAfter, currency)}
                           </td>
                         </tr>
                       ))}
@@ -304,7 +389,7 @@ export function EnfixLoansClient({ loans, currency }: { loans: LoanWithRepayment
               <Landmark className="w-16 h-16 text-gray-200 mb-4" />
               <h3 className="text-xl font-bold text-[#1e293b]">Select a Loan</h3>
               <p className="text-gray-400 max-w-sm mt-2">
-                Click on a loan from the list to view its full details and repayment history.
+                Click on a loan from the list to view its details and complete activity history.
               </p>
             </div>
           )}
