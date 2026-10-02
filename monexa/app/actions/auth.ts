@@ -2,9 +2,11 @@
 
 import { signIn, signOut } from "@/auth";
 import prisma from "@/lib/prisma";
-import bcrypt from "bcryptjs";
 import { AuthError } from "next-auth";
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
+import { emailSchema, nameSchema, newPasswordSchema, normalizeEmail } from "@/lib/auth-validation";
+import { findUserByEmail, hashPassword } from "@/lib/user-auth";
 import {
   consumeRateLimit,
   formatRetryAfter,
@@ -16,9 +18,9 @@ import {
 } from "@/lib/rate-limit";
 
 const registerSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  name: nameSchema,
+  email: emailSchema,
+  password: newPasswordSchema,
 });
 
 export async function registerUser(prevState: unknown, formData: FormData) {
@@ -38,15 +40,13 @@ export async function registerUser(prevState: unknown, formData: FormData) {
 
     const { name, email, password } = validatedData.data;
 
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
+    const existingUser = await findUserByEmail(email);
 
     if (existingUser) {
       return { error: "Email already in use" };
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await hashPassword(password);
 
     await prisma.user.create({
       data: {
@@ -71,6 +71,10 @@ export async function registerUser(prevState: unknown, formData: FormData) {
 
     return { success: "Registration successful. You can now log in." };
   } catch (error) {
+    // Two sign-ups with the same email at once: the unique index catches the second.
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      return { error: "Email already in use" };
+    }
     console.error("Error registering user:", error);
     return { error: "Something went wrong" };
   }
@@ -79,7 +83,7 @@ export async function registerUser(prevState: unknown, formData: FormData) {
 export async function authenticate(prevState: unknown, formData: FormData) {
   // The real enforcement is inside auth.ts (authorize). This read-only check
   // just lets us say WHY the login is refused, instead of "invalid password".
-  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const email = normalizeEmail(String(formData.get("email") ?? ""));
   if (email) {
     const [byEmail, byIp] = await Promise.all([
       peekRateLimit(`login:email:${email}`, LOGIN_EMAIL_LIMIT),

@@ -52,6 +52,8 @@ export function checkEnv(env: NodeJS.ProcessEnv = process.env): EnvReport {
 
     if (!env.RESEND_API_KEY || !env.EMAIL_FROM) {
       warnings.push("RESEND_API_KEY / EMAIL_FROM are not set - password-reset emails cannot be sent.");
+    } else if (/@resend\.dev>?\s*$/i.test(env.EMAIL_FROM)) {
+      warnings.push("EMAIL_FROM uses Resend's test sender (resend.dev), which only delivers to your own Resend account. Verify a domain for real users.");
     }
   }
 

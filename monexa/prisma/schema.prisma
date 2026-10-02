@@ -23,6 +23,10 @@ model User {
   resetToken       String?   @unique
   resetTokenExpiry DateTime?
 
+  // Copied into each session token at login. Incrementing it (e.g. on password
+  // reset) logs out every existing session.
+  sessionVersion Int @default(0)
+
   categories   Category[]
   transactions Transaction[]
   loans        Loan[]

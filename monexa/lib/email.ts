@@ -44,8 +44,15 @@ export async function sendEmail(message: EmailMessage): Promise<boolean> {
       signal: AbortSignal.timeout(10_000),
     });
     if (!response.ok) {
-      // Log the status only - the response can echo the recipient's address.
-      console.error(`Email provider rejected the message (HTTP ${response.status}).`);
+      // Log the status and error type only - the message can echo the recipient's address.
+      const body = (await response.json().catch(() => null)) as { name?: string } | null;
+      console.error(`Email provider rejected the message (HTTP ${response.status}${body?.name ? `, ${body.name}` : ""}).`);
+      if (response.status === 403 && /@resend\.dev>?\s*$/i.test(from)) {
+        console.error(
+          "EMAIL_FROM is Resend's test sender, which only delivers to the email you signed up to Resend with. " +
+            "Verify a domain at https://resend.com/domains to email other addresses.",
+        );
+      }
       return false;
     }
     return true;
@@ -58,33 +65,79 @@ export async function sendEmail(message: EmailMessage): Promise<boolean> {
 const escapeHtml = (value: string) =>
   value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
+/** Shared look for all emails: a white card on the app's green background. `bodyHtml` must already be escaped. */
+function layout(title: string, bodyHtml: string) {
+  return `<!doctype html>
+<html><body style="margin:0;padding:24px;background:#eef7f2;font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#1e293b">
+  <table role="presentation" width="100%" style="max-width:480px;margin:0 auto;background:#ffffff;border-radius:24px;padding:32px">
+    <tr><td>
+      <p style="margin:0 0 24px;font-size:18px;font-weight:bold;color:#059669">Monexa</p>
+      <h1 style="margin:0 0 16px;font-size:20px">${escapeHtml(title)}</h1>
+      ${bodyHtml}
+    </td></tr>
+  </table>
+  <p style="max-width:480px;margin:16px auto 0;text-align:center;font-size:12px;color:#94a3b8">You're receiving this because of activity on your Monexa account.</p>
+</body></html>`;
+}
+
+const paragraph = (html: string, muted = false) =>
+  `<p style="margin:0 0 16px;line-height:1.5${muted ? ";font-size:13px;color:#64748b" : ""}">${html}</p>`;
+
+const greetingFor = (name?: string | null) => ({
+  text: name ? `Hi ${name},` : "Hi,",
+  html: name ? `Hi ${escapeHtml(name)},` : "Hi,",
+});
+
 export function passwordResetEmail({ name, link }: { name?: string | null; link: string }): Omit<EmailMessage, "to"> {
-  const greeting = name ? `Hi ${name},` : "Hi,";
-  const safeGreeting = name ? `Hi ${escapeHtml(name)},` : "Hi,";
+  const greeting = greetingFor(name);
   const safeLink = escapeHtml(link);
 
   return {
     subject: "Reset your Monexa password",
     text: [
-      greeting,
+      greeting.text,
       "",
       "We received a request to reset your Monexa password. Open this link to choose a new one (it works for 1 hour):",
       link,
       "",
       "If you didn't ask for this, you can ignore this email - your password won't change.",
     ].join("\n"),
-    html: `<!doctype html>
-<html><body style="margin:0;padding:24px;background:#eef7f2;font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#1e293b">
-  <table role="presentation" width="100%" style="max-width:480px;margin:0 auto;background:#ffffff;border-radius:24px;padding:32px">
-    <tr><td>
-      <h1 style="margin:0 0 16px;font-size:20px">Reset your password</h1>
-      <p style="margin:0 0 12px;line-height:1.5">${safeGreeting}</p>
-      <p style="margin:0 0 24px;line-height:1.5">We received a request to reset your Monexa password. The link below works for 1 hour.</p>
-      <p style="margin:0 0 24px"><a href="${safeLink}" style="display:inline-block;background:#059669;color:#ffffff;text-decoration:none;font-weight:bold;padding:12px 28px;border-radius:999px">Choose a new password</a></p>
-      <p style="margin:0;font-size:13px;color:#64748b;line-height:1.5">If the button doesn't work, paste this link into your browser:<br>${safeLink}</p>
-      <p style="margin:24px 0 0;font-size:13px;color:#64748b;line-height:1.5">If you didn't ask for this, you can ignore this email - your password won't change.</p>
-    </td></tr>
-  </table>
-</body></html>`,
+    html: layout(
+      "Reset your password",
+      [
+        paragraph(greeting.html),
+        paragraph("We received a request to reset your Monexa password. The link below works for 1 hour."),
+        `<p style="margin:8px 0 24px"><a href="${safeLink}" style="display:inline-block;background:#059669;color:#ffffff;text-decoration:none;font-weight:bold;padding:12px 28px;border-radius:999px">Choose a new password</a></p>`,
+        paragraph(`If the button doesn't work, paste this link into your browser:<br>${safeLink}`, true),
+        paragraph("If you didn't ask for this, you can ignore this email - your password won't change.", true),
+      ].join("\n"),
+    ),
+  };
+}
+
+export function passwordChangedEmail({ name, loginUrl }: { name?: string | null; loginUrl: string }): Omit<EmailMessage, "to"> {
+  const greeting = greetingFor(name);
+  const safeUrl = escapeHtml(loginUrl);
+
+  return {
+    subject: "Your Monexa password was changed",
+    text: [
+      greeting.text,
+      "",
+      "The password for your Monexa account was just changed, and every device that was signed in has been signed out.",
+      "",
+      `If this was you, there's nothing else to do. You can sign in here: ${loginUrl}`,
+      "",
+      "If you did NOT change it, someone may have access to your email. Secure your email account first, then reset your Monexa password from the sign-in page.",
+    ].join("\n"),
+    html: layout(
+      "Your password was changed",
+      [
+        paragraph(greeting.html),
+        paragraph("The password for your Monexa account was just changed, and every device that was signed in has been signed out."),
+        paragraph(`If this was you, there's nothing else to do. <a href="${safeUrl}" style="color:#059669;font-weight:bold">Sign in to Monexa</a>`),
+        paragraph("<strong>Didn't do this?</strong> Someone may have access to your email. Secure your email account first, then reset your Monexa password from the sign-in page.", true),
+      ].join("\n"),
+    ),
   };
 }

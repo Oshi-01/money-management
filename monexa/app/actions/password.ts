@@ -1,14 +1,15 @@
 "use server";
 
 import prisma from "@/lib/prisma";
-import bcrypt from "bcryptjs";
 import { z } from "zod";
 import crypto from "crypto";
 import { headers } from "next/headers";
 import { after } from "next/server";
-import { consumeRateLimit, formatRetryAfter, getClientIp, HOUR } from "@/lib/rate-limit";
-import { passwordResetEmail, sendEmail } from "@/lib/email";
+import { clearRateLimit, consumeRateLimit, formatRetryAfter, getClientIp, HOUR } from "@/lib/rate-limit";
+import { passwordChangedEmail, passwordResetEmail, sendEmail } from "@/lib/email";
 import { getAppUrl } from "@/lib/env";
+import { emailSchema, newPasswordSchema } from "@/lib/auth-validation";
+import { findUserByEmail, hashPassword } from "@/lib/user-auth";
 
 const RESET_TOKEN_TTL_MS = HOUR;
 
@@ -22,14 +23,14 @@ function hashToken(token: string) {
 }
 
 /** Base URL for links in emails. Production uses APP_URL; development can use the request's host. */
-async function resetBaseUrl() {
+async function emailBaseUrl() {
   if (process.env.NODE_ENV === "production") return getAppUrl();
   const host = (await headers()).get("host") || "localhost:3000";
   return getAppUrl(`http://${host}`);
 }
 
 const requestResetSchema = z.object({
-  email: z.string().email("Invalid email address"),
+  email: emailSchema,
 });
 
 type ActionResult = { success?: string; error?: string };
@@ -49,16 +50,14 @@ export async function requestPasswordReset(prevState: unknown, formData: FormDat
     // text - not on whether an account exists - so it reveals nothing.
     const [byIp, byEmail] = await Promise.all([
       consumeRateLimit(`forgot:ip:${await getClientIp()}`, 10, HOUR),
-      consumeRateLimit(`forgot:email:${email.toLowerCase()}`, 3, HOUR),
+      consumeRateLimit(`forgot:email:${email}`, 3, HOUR),
     ]);
     if (!byIp.allowed || !byEmail.allowed) {
       const wait = Math.max(byIp.retryAfterSec, byEmail.retryAfterSec);
       return { error: `Too many reset requests. Please try again in ${formatRetryAfter(wait)}.` };
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email },
-    });
+    const user = await findUserByEmail(email);
 
     // Same answer whether or not the account exists, so this form can't be
     // used to find out who has an account.
@@ -78,7 +77,7 @@ export async function requestPasswordReset(prevState: unknown, formData: FormDat
 
     // Send after the response has gone out, so the request takes the same time
     // whether or not an email is sent (another way to avoid revealing accounts).
-    const baseUrl = resetBaseUrl();
+    const baseUrl = emailBaseUrl();
     after(async () => {
       try {
         const link = `${await baseUrl}/reset-password?token=${token}`;
@@ -97,8 +96,8 @@ export async function requestPasswordReset(prevState: unknown, formData: FormDat
 }
 
 const resetPasswordSchema = z.object({
-  token: z.string().min(1, "Token is missing"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  token: z.string().regex(/^[a-f0-9]{64}$/, "Invalid or expired password reset token."),
+  password: newPasswordSchema,
 });
 
 export async function resetPassword(prevState: unknown, formData: FormData): Promise<ActionResult> {
@@ -118,26 +117,43 @@ export async function resetPassword(prevState: unknown, formData: FormData): Pro
       return { error: `Too many attempts. Please try again in ${formatRetryAfter(limit.retryAfterSec)}.` };
     }
 
-    // Look the token up by its hash and check it has not expired.
-    const user = await prisma.user.findUnique({
-      where: { resetToken: hashToken(token) },
-    });
+    const hashedPassword = await hashPassword(password);
 
-    if (!user || !user.resetTokenExpiry || user.resetTokenExpiry < new Date()) {
+    // Claim the token and change the password in one statement, so a link can
+    // only ever be used once even if submitted twice at the same moment.
+    // Bumping sessionVersion logs out every existing session (see auth.ts).
+    const tokenHash = hashToken(token);
+    const user = await prisma.user.findUnique({ where: { resetToken: tokenHash }, select: { id: true, email: true, name: true } });
+    const claimed = user
+      ? await prisma.user.updateMany({
+          where: { id: user.id, resetToken: tokenHash, resetTokenExpiry: { gt: new Date() } },
+          data: {
+            password: hashedPassword,
+            resetToken: null,
+            resetTokenExpiry: null,
+            sessionVersion: { increment: 1 },
+          },
+        })
+      : { count: 0 };
+
+    if (!user || claimed.count === 0) {
       return { error: "Invalid or expired password reset token." };
     }
 
-    // Hash the new password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    await clearRateLimit(`login:email:${user.email.toLowerCase()}`);
 
-    // Update user password and clear reset token (single use)
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        password: hashedPassword,
-        resetToken: null,
-        resetTokenExpiry: null,
-      },
+    // Tell the owner, so an unexpected reset (e.g. a hijacked inbox) doesn't go unnoticed.
+    const baseUrl = emailBaseUrl();
+    after(async () => {
+      try {
+        const sent = await sendEmail({
+          to: user.email,
+          ...passwordChangedEmail({ name: user.name, loginUrl: `${await baseUrl}/login` }),
+        });
+        if (!sent) console.error("Password changed email could not be delivered.");
+      } catch (error) {
+        console.error("Password changed email failed:", error instanceof Error ? error.message : error);
+      }
     });
 
     return { success: "Your password has been successfully reset. You can now log in." };

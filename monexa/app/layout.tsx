@@ -20,13 +20,15 @@ export default function RootLayout({
 }>) {
   return (
     // suppressHydrationWarning: next-themes sets the "dark" class on <html>
-    // before React loads, which would otherwise be flagged as a mismatch.
+    // before React loads, and browser extensions (e.g. ColorZilla, Grammarly)
+    // add attributes to <body>; both would otherwise be flagged as mismatches.
+    // It only covers these elements' own attributes, not their children.
     <html
       lang="en"
       className={`${inter.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col font-sans">
+      <body className="min-h-full flex flex-col font-sans" suppressHydrationWarning>
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
