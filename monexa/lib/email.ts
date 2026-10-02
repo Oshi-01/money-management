@@ -1,14 +1,18 @@
+import nodemailer, { type Transporter } from "nodemailer";
+
 /**
- * Sends email through Resend (https://resend.com) using its HTTP API - no SDK
- * needed. Configure with RESEND_API_KEY and EMAIL_FROM
- * (e.g. 'Monexa <no-reply@your-domain.com>').
+ * Sends email through whichever provider is configured, checked in this order:
  *
- * Without a key, emails are printed to the console in development only. In
- * production they are NOT logged (a reset link is an account-takeover token)
- * and the send simply fails, which callers must handle.
+ * 1. SMTP (SMTP_HOST, SMTP_USER, SMTP_PASS, optional SMTP_PORT) - e.g. Gmail
+ *    with an app password. Needs no domain of your own.
+ * 2. Resend's HTTP API (RESEND_API_KEY + EMAIL_FROM).
  *
- * To use another provider (SendGrid, Postmark, SES...) replace the body of
- * sendEmail() - nothing else in the app depends on Resend.
+ * EMAIL_FROM is the sender, e.g. 'Monexa <no-reply@your-domain.com>'. With
+ * Gmail it must be your Gmail address (it defaults to SMTP_USER).
+ *
+ * With nothing configured, emails are printed to the console in development
+ * only. In production they are NOT logged (a reset link is an account-takeover
+ * token) and the send simply fails, which callers must handle.
  */
 
 export type EmailMessage = {
@@ -18,21 +22,66 @@ export type EmailMessage = {
   text: string;
 };
 
+type SmtpConfig = { host: string; port: number; user: string; pass: string; from: string };
+
+function smtpConfig(): SmtpConfig | null {
+  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, EMAIL_FROM } = process.env;
+  if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) return null;
+  return {
+    host: SMTP_HOST,
+    port: Number(SMTP_PORT) || 465,
+    user: SMTP_USER,
+    // Google shows app passwords in groups of four ("abcd efgh ..."); the spaces aren't part of it.
+    pass: SMTP_HOST.includes("gmail") ? SMTP_PASS.replace(/\s+/g, "") : SMTP_PASS,
+    from: EMAIL_FROM || SMTP_USER,
+  };
+}
+
+let transporter: Transporter | undefined;
+
+async function sendViaSmtp(config: SmtpConfig, message: EmailMessage): Promise<boolean> {
+  transporter ??= nodemailer.createTransport({
+    host: config.host,
+    port: config.port,
+    secure: config.port === 465, // 465 = TLS from the start; 587 upgrades with STARTTLS
+    auth: { user: config.user, pass: config.pass },
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 15_000,
+  });
+
+  try {
+    await transporter.sendMail({ from: config.from, ...message });
+    return true;
+  } catch (error) {
+    // The error code (e.g. EAUTH) is enough to diagnose; the full error can include addresses.
+    const details = (error ?? {}) as { code?: string; responseCode?: number };
+    console.error(`SMTP send failed (${details.code ?? "unknown"}${details.responseCode ? `, ${details.responseCode}` : ""}).`);
+    if (details.code === "EAUTH") {
+      console.error("SMTP login was refused. For Gmail, SMTP_PASS must be an app password, not your normal password.");
+    }
+    return false;
+  }
+}
+
 export async function sendEmail(message: EmailMessage): Promise<boolean> {
+  const smtp = smtpConfig();
+  if (smtp) return sendViaSmtp(smtp, message);
+
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM;
 
   if (!apiKey || !from) {
     if (process.env.NODE_ENV !== "production") {
       console.log("\n=======================================");
-      console.log(`EMAIL (development only - no RESEND_API_KEY set)`);
+      console.log(`EMAIL (development only - no email provider configured)`);
       console.log(`To:      ${message.to}`);
       console.log(`Subject: ${message.subject}`);
       console.log(message.text);
       console.log("=======================================\n");
       return true;
     }
-    console.error("Email not sent: RESEND_API_KEY / EMAIL_FROM are not configured.");
+    console.error("Email not sent: configure SMTP_* or RESEND_API_KEY / EMAIL_FROM.");
     return false;
   }
 

@@ -9,10 +9,13 @@ if (!to) {
   process.exit(1);
 }
 
-if (!process.env.RESEND_API_KEY || !process.env.EMAIL_FROM) {
-  console.error("RESEND_API_KEY and EMAIL_FROM must be set in .env first.");
+const { SMTP_HOST, SMTP_USER, SMTP_PASS, RESEND_API_KEY, EMAIL_FROM } = process.env;
+const usingSmtp = Boolean(SMTP_HOST && SMTP_USER && SMTP_PASS);
+if (!usingSmtp && !(RESEND_API_KEY && EMAIL_FROM)) {
+  console.error("Set SMTP_HOST, SMTP_USER and SMTP_PASS (or RESEND_API_KEY and EMAIL_FROM) in .env first.");
   process.exit(1);
 }
+console.log(`Sending via ${usingSmtp ? `SMTP (${SMTP_HOST})` : "Resend"}...`);
 
 const sent = await sendEmail({
   to,
@@ -22,8 +25,6 @@ const sent = await sendEmail({
 if (sent) {
   console.log(`Sent. Check the inbox (and spam folder) of ${to}.`);
 } else {
-  console.error(
-    "Not sent - see the error above. Using onboarding@resend.dev? It can only send to the email you signed up to Resend with.",
-  );
+  console.error("Not sent - see the error above.");
   process.exit(1);
 }
