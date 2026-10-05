@@ -1,9 +1,11 @@
 import { getEnfixBudgetsData } from "@/app/actions/budgets";
 import { getCategories } from "@/app/actions/categories";
+import { getUserAccounts } from "@/app/actions/accounts";
 import { getUserSettings } from "@/app/actions/settings";
 import { EnfixBudgetsClient } from "@/components/budgets/enfix-budgets-client";
 import { MonthSwitcher } from "@/components/dashboard/month-switcher";
 import { TotalBudgetCard } from "@/components/budgets/total-budget-card";
+import { NewTransactionDialog } from "@/components/transactions/new-transaction-dialog";
 import { formatMonthLabel, monthOrCurrent, toMonthStr } from "@/lib/dates";
 
 export const metadata = {
@@ -21,9 +23,10 @@ export default async function BudgetsPage(
   // ?month=YYYY-MM from the month switcher; anything invalid falls back to the current month.
   const selectedMonth = monthOrCurrent(searchParams?.month);
 
-  const [budgetData, categories, userSettings] = await Promise.all([
+  const [budgetData, categories, accounts, userSettings] = await Promise.all([
     getEnfixBudgetsData(selectedMonth),
     getCategories(),
+    getUserAccounts(),
     getUserSettings(),
   ]);
 
@@ -39,7 +42,15 @@ export default async function BudgetsPage(
             Track your spending and stay within your limits.
           </p>
         </div>
-        <MonthSwitcher month={selectedMonth} />
+        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
+          <NewTransactionDialog
+            categories={categories}
+            accounts={accounts}
+            budgets={budgets}
+            currency={currency}
+          />
+          <MonthSwitcher month={selectedMonth} />
+        </div>
       </div>
 
       {budgets.length > 0 && (

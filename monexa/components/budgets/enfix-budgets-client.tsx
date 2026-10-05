@@ -256,10 +256,13 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
 
         <Dialog>
           <DialogTrigger render={
-            <div className="cursor-pointer bg-white rounded-2xl p-5 flex items-center justify-between text-gray-700 font-bold hover:bg-emerald-50 transition-colors border border-dashed border-gray-200">
+            <button
+              type="button"
+              className="flex w-full cursor-pointer items-center justify-between rounded-2xl border border-dashed border-gray-200 bg-white p-5 text-left font-bold text-gray-700 transition-colors hover:bg-emerald-50"
+            >
               <span>Add new budget</span>
               <Plus className="w-5 h-5 text-emerald-500" />
-            </div>
+            </button>
           } />
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
