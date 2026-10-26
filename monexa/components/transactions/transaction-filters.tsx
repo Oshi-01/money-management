@@ -59,22 +59,22 @@ export function TransactionFilters({ categories }: { categories: Category[] }) {
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
         {/* Search */}
         <div className="relative flex-1">
-          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search description, notes or category"
             aria-label="Search transactions"
-            className="h-11 rounded-full pl-10 pr-10"
+            className="h-11 rounded-xl pl-10 pr-10"
           />
           {isPending ? (
-            <Loader2 className="absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-gray-400" />
+            <Loader2 className="absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
           ) : search ? (
             <button
               type="button"
               aria-label="Clear search"
               onClick={() => { setSearch(""); setPushed(""); update({ q: null }); }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-xl p-1 text-muted-foreground hover:bg-muted hover:text-secondary-foreground"
             >
               <X className="h-4 w-4" />
             </button>
@@ -82,15 +82,15 @@ export function TransactionFilters({ categories }: { categories: Category[] }) {
         </div>
 
         {/* Type */}
-        <div className="flex shrink-0 items-center gap-1 rounded-full border border-gray-100 bg-white p-1 shadow-sm" role="group" aria-label="Transaction type">
+        <div className="flex shrink-0 items-center gap-1 rounded-xl border border-border bg-muted p-1" role="group" aria-label="Transaction type">
           {TYPES.map(t => (
             <button
               key={t.value}
               type="button"
               onClick={() => update({ type: t.value, category: null })}
               aria-pressed={type === t.value}
-              className={`flex-1 rounded-full px-4 py-1.5 text-sm font-bold transition-colors ${
-                type === t.value ? "bg-emerald-600 text-white" : "text-gray-500 hover:bg-gray-50"
+              className={`flex-1 rounded-xl px-4 py-1.5 text-sm font-medium transition-colors ${
+                type === t.value ? "bg-primary-soft text-primary" : "text-muted-foreground hover:bg-muted"
               }`}
             >
               {t.label}
@@ -102,7 +102,7 @@ export function TransactionFilters({ categories }: { categories: Category[] }) {
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
         {/* Category */}
         <Select value={categoryId || "ALL"} onValueChange={(v) => update({ category: !v || v === "ALL" ? null : v })}>
-          <SelectTrigger className="h-10 w-full rounded-full sm:w-52" aria-label="Filter by category">
+          <SelectTrigger className="h-10 w-full rounded-xl sm:w-52" aria-label="Filter by category">
             <SelectValue placeholder="All categories">{categoryName ?? "All categories"}</SelectValue>
           </SelectTrigger>
           <SelectContent>
@@ -121,16 +121,16 @@ export function TransactionFilters({ categories }: { categories: Category[] }) {
             max={to || undefined}
             onChange={(e) => update({ from: e.target.value })}
             aria-label="From date"
-            className="h-10 rounded-full sm:w-40"
+            className="h-10 rounded-xl sm:w-40"
           />
-          <span className="text-sm text-gray-400">to</span>
+          <span className="text-sm text-muted-foreground">to</span>
           <Input
             type="date"
             value={to}
             min={from || undefined}
             onChange={(e) => update({ to: e.target.value })}
             aria-label="To date"
-            className="h-10 rounded-full sm:w-40"
+            className="h-10 rounded-xl sm:w-40"
           />
         </div>
 
@@ -138,7 +138,7 @@ export function TransactionFilters({ categories }: { categories: Category[] }) {
           <Button
             variant="ghost"
             onClick={() => { setSearch(""); setPushed(""); update({ q: null, type: null, category: null, from: null, to: null }); }}
-            className="h-10 rounded-full px-4 text-gray-500 hover:text-rose-600"
+            className="h-10 rounded-xl px-4 text-muted-foreground hover:text-foreground"
           >
             <X className="mr-1.5 h-4 w-4" /> Clear filters
           </Button>

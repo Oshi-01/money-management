@@ -20,13 +20,10 @@ export default async function SavingsPage() {
     <div className="space-y-6 pb-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-[#1e293b]">Goals</h2>
-          <p className="text-sm text-gray-400">
+          <h2 className="page-title">Goals</h2>
+          <p className="page-description">
             Save toward the things that matter.
           </p>
-        </div>
-        <div className="text-sm text-gray-400 font-medium">
-          Home <span className="mx-2">&gt;</span> <span className="text-emerald-600">Goals</span>
         </div>
       </div>
 

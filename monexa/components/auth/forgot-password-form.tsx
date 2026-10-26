@@ -21,7 +21,7 @@ function BackToLogin() {
   return (
     <Link
       href="/login"
-      className="mt-8 flex items-center justify-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+      className="mt-8 flex items-center justify-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground"
     >
       <ArrowLeft className="h-4 w-4" />
       Back to sign in

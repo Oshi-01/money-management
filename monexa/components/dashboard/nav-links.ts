@@ -1,6 +1,7 @@
 import {
   Gauge,
   Wallet,
+  CreditCard,
   CircleDollarSign,
   Target,
   Landmark,
@@ -13,6 +14,7 @@ import {
 export const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: Gauge },
   { name: "Transactions", href: "/dashboard/transactions", icon: ArrowLeftRight },
+  { name: "Wallets & cards", href: "/dashboard/wallets", icon: CreditCard },
   { name: "Categories", href: "/dashboard/categories", icon: CircleDollarSign },
   { name: "Loans", href: "/dashboard/loans", icon: Landmark },
   { name: "Budgets", href: "/dashboard/budgets", icon: Wallet },

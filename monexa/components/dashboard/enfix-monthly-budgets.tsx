@@ -94,11 +94,11 @@ export function EnfixMonthlyBudgets({ budgets, categories, currency }: EnfixMont
   };
 
   return (
-    <div className="flex h-full w-full flex-col">
+    <div className="app-panel flex h-full w-full flex-col p-5 sm:p-6">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-bold text-[#1e293b]">Daily Budget Guide</h2>
-          <p className="text-xs text-gray-400">Recommended spending for today</p>
+          <h2 className="text-lg font-semibold tracking-tight text-foreground">Daily budget guide</h2>
+          <p className="text-xs text-muted-foreground">Recommended spending for today</p>
         </div>
         {budgets.length > 0 && (
           <Button variant="outline" size="sm" onClick={openManager} className="rounded-full">
@@ -108,10 +108,10 @@ export function EnfixMonthlyBudgets({ budgets, categories, currency }: EnfixMont
       </div>
 
       {budgets.length === 0 ? (
-        <div className="flex min-h-55 flex-1 flex-col items-center justify-center rounded-3xl bg-white/60 px-5 text-center">
-          <Wallet className="mb-3 h-8 w-8 text-gray-300" />
-          <p className="text-sm font-semibold text-gray-600">No monthly budgets yet</p>
-          <p className="mt-1 text-xs text-gray-400">Create a monthly budget to calculate a daily limit.</p>
+        <div className="flex min-h-55 flex-1 flex-col items-center justify-center rounded-3xl bg-card/60 px-5 text-center">
+          <Wallet className="mb-3 h-8 w-8 text-muted-foreground" />
+          <p className="text-sm font-semibold text-secondary-foreground">No monthly budgets yet</p>
+          <p className="mt-1 text-xs text-muted-foreground">Create a monthly budget to calculate a daily limit.</p>
           <Button render={<Link href="/dashboard/budgets" />} size="sm" className="mt-4 rounded-full">
             Create Budget
           </Button>
@@ -120,11 +120,11 @@ export function EnfixMonthlyBudgets({ budgets, categories, currency }: EnfixMont
         <button
           type="button"
           onClick={openManager}
-          className="flex min-h-55 flex-1 flex-col items-center justify-center rounded-3xl border border-dashed border-emerald-200 bg-white/60 px-5 text-center transition-colors hover:bg-emerald-50"
+          className="flex min-h-55 flex-1 flex-col items-center justify-center rounded-3xl border border-dashed border-primary-border bg-card/60 px-5 text-center transition-colors hover:bg-primary-soft"
         >
-          <Settings2 className="mb-3 h-8 w-8 text-emerald-500" />
-          <span className="text-sm font-semibold text-gray-700">Choose budgets to show</span>
-          <span className="mt-1 text-xs text-gray-400">You can select more than one category.</span>
+          <Settings2 className="mb-3 h-8 w-8 text-primary" />
+          <span className="text-sm font-semibold text-secondary-foreground">Choose budgets to show</span>
+          <span className="mt-1 text-xs text-muted-foreground">You can select more than one category.</span>
         </button>
       ) : (
         <div className="max-h-87.5 space-y-3 overflow-y-auto pr-1 scrollbar-thin">
@@ -136,22 +136,22 @@ export function EnfixMonthlyBudgets({ budgets, categories, currency }: EnfixMont
             const isOver = budget.spent > budget.amount;
 
             return (
-              <div key={budget.id} className="rounded-3xl border border-gray-100 bg-white p-4 shadow-sm">
+              <div key={budget.id} className="rounded-2xl bg-muted p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-3">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-secondary-foreground">
                       <Icon className="h-4 w-4" />
                     </div>
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-bold text-[#1e293b]">{budget.category.name}</p>
-                      <p className="text-xs text-gray-400">{remainingDays} day{remainingDays === 1 ? "" : "s"} left</p>
+                      <p className="truncate text-sm font-bold text-foreground">{budget.category.name}</p>
+                      <p className="text-xs text-muted-foreground">{remainingDays} day{remainingDays === 1 ? "" : "s"} left</p>
                     </div>
                   </div>
                   <div className="flex shrink-0 items-center">
-                    <Button variant="ghost" size="icon" aria-label={`Edit ${budget.category.name} budget`} onClick={() => setEditing(budget)} className="h-8 w-8 rounded-full text-gray-400 hover:bg-emerald-50 hover:text-emerald-600">
+                    <Button variant="ghost" size="icon" aria-label={`Edit ${budget.category.name} budget`} onClick={() => setEditing(budget)} className="h-8 w-8 rounded-full text-muted-foreground hover:bg-primary-soft hover:text-primary">
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
-                    <Button variant="ghost" size="icon" aria-label={`Delete ${budget.category.name} budget`} onClick={() => setDeleting(budget)} className="h-8 w-8 rounded-full text-gray-400 hover:bg-rose-50 hover:text-rose-600">
+                    <Button variant="ghost" size="icon" aria-label={`Delete ${budget.category.name} budget`} onClick={() => setDeleting(budget)} className="h-8 w-8 rounded-full text-muted-foreground hover:bg-danger-soft hover:text-destructive">
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </div>
@@ -159,20 +159,20 @@ export function EnfixMonthlyBudgets({ budgets, categories, currency }: EnfixMont
 
                 <div className="mt-4 flex items-end justify-between gap-3">
                   <div>
-                    <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400">Today&apos;s limit</p>
-                    <p className={`text-xl font-bold ${isOver ? "text-rose-600" : "text-emerald-600"}`}>
+                    <p className="text-xs font-medium text-muted-foreground">Today&apos;s limit</p>
+                    <p className={`text-xl font-bold ${isOver ? "text-warning" : "text-foreground"}`}>
                       {formatCurrency(dailyLimit, currency)}
                     </p>
                   </div>
-                  <p className="text-right text-xs text-gray-400">
+                  <p className="text-right text-xs text-muted-foreground">
                     {isOver ? `${formatCurrency(budget.spent - budget.amount, currency)} over` : `${formatCurrency(remaining, currency)} left`}
                   </p>
                 </div>
 
-                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-gray-100">
-                  <div className={`h-full rounded-full ${isOver ? "bg-rose-500" : "bg-emerald-500"}`} style={{ width: `${percent}%` }} />
+                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted">
+                  <div className={`h-full rounded-full ${isOver ? "bg-warning" : "bg-progress"}`} style={{ width: `${percent}%` }} />
                 </div>
-                <div className="mt-1.5 flex justify-between text-[10px] font-medium text-gray-400">
+                <div className="mt-1.5 flex justify-between text-[10px] font-medium text-muted-foreground">
                   <span>{formatCurrency(budget.spent, currency)} spent</span>
                   <span>{formatCurrency(budget.amount, currency)} monthly</span>
                 </div>
@@ -187,22 +187,22 @@ export function EnfixMonthlyBudgets({ budgets, categories, currency }: EnfixMont
           <DialogHeader>
             <DialogTitle>Choose Dashboard Budgets</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-gray-500">Select every monthly budget you want to use for daily guidance.</p>
+          <p className="text-sm text-muted-foreground">Select every monthly budget you want to use for daily guidance.</p>
           <div className="max-h-80 space-y-2 overflow-y-auto py-1">
             {budgets.map((budget) => (
-              <div key={budget.id} className="flex items-center gap-2 rounded-2xl border border-gray-100 p-2 hover:bg-gray-50">
+              <div key={budget.id} className="flex items-center gap-2 rounded-2xl border border-border p-2 hover:bg-muted">
                 <label className="flex min-w-0 flex-1 cursor-pointer items-center justify-between gap-3 p-2">
                   <div className="min-w-0">
-                    <p className="truncate font-semibold text-[#1e293b]">{budget.category.name}</p>
-                    <p className="text-xs text-gray-400">{formatCurrency(budget.amount, currency)} monthly</p>
+                    <p className="truncate font-semibold text-foreground">{budget.category.name}</p>
+                    <p className="text-xs text-muted-foreground">{formatCurrency(budget.amount, currency)} monthly</p>
                   </div>
-                  <input type="checkbox" checked={draftIds.has(budget.id)} onChange={() => toggleBudget(budget.id)} className="h-4 w-4 shrink-0 rounded border-gray-300 accent-emerald-600" />
+                  <input type="checkbox" checked={draftIds.has(budget.id)} onChange={() => toggleBudget(budget.id)} className="h-4 w-4 shrink-0 rounded border-input accent-primary" />
                 </label>
-                <div className="flex shrink-0 items-center border-l border-gray-100 pl-1">
-                  <Button variant="ghost" size="icon" aria-label={`Edit ${budget.category.name} budget`} onClick={() => { setIsManaging(false); setEditing(budget); }} className="h-8 w-8 rounded-full text-gray-400 hover:text-emerald-600">
+                <div className="flex shrink-0 items-center border-l border-border pl-1">
+                  <Button variant="ghost" size="icon" aria-label={`Edit ${budget.category.name} budget`} onClick={() => { setIsManaging(false); setEditing(budget); }} className="h-8 w-8 rounded-full text-muted-foreground hover:text-primary">
                     <Pencil className="h-3.5 w-3.5" />
                   </Button>
-                  <Button variant="ghost" size="icon" aria-label={`Delete ${budget.category.name} budget`} onClick={() => { setIsManaging(false); setDeleting(budget); }} className="h-8 w-8 rounded-full text-gray-400 hover:text-rose-600">
+                  <Button variant="ghost" size="icon" aria-label={`Delete ${budget.category.name} budget`} onClick={() => { setIsManaging(false); setDeleting(budget); }} className="h-8 w-8 rounded-full text-muted-foreground hover:text-destructive">
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </div>

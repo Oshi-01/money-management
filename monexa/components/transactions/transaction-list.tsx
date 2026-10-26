@@ -49,7 +49,7 @@ export function TransactionList({
         toast.error(result.error);
         return;
       }
-      toast.success(result.success);
+      if ("success" in result) toast.success(result.success);
       setTarget(null);
     });
   };
@@ -57,10 +57,10 @@ export function TransactionList({
   if (transactions.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-800 mb-4">
-          <Receipt className="h-8 w-8 text-gray-400" />
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted mb-4">
+          <Receipt className="h-8 w-8 text-muted-foreground" />
         </div>
-        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+        <p className="text-sm font-medium text-foreground">
           {isFiltered ? "No transactions match your filters" : "No transactions yet"}
         </p>
         <p className="text-xs text-muted-foreground mt-1">
@@ -72,40 +72,40 @@ export function TransactionList({
 
   return (
     <>
-      <div className="space-y-2">
+      <div className="divide-y divide-border/70">
         {transactions.map((t) => {
           const isIncome = t.type === "INCOME";
           return (
             <div
               key={t.id}
-              onClick={canEdit ? () => setEditing(t) : undefined}
-              className={`flex items-center justify-between gap-3 p-3 sm:p-4 rounded-2xl border border-gray-100 bg-white transition-all duration-200 hover:shadow-sm hover:border-gray-200 group ${canEdit ? "cursor-pointer" : ""}`}
+              className="group flex items-center justify-between gap-3 py-4 sm:px-1"
             >
               <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                <div className={`flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl ${
-                  isIncome ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
+                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
+                  isIncome ? "bg-income-soft text-income" : "bg-expense-soft text-expense"
                 }`}>
                   {isIncome ? <ArrowUpRight className="h-5 w-5" /> : <ArrowDownRight className="h-5 w-5" />}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm sm:text-base font-bold text-[#1e293b] truncate">{t.description}</p>
+                  <p className="text-sm sm:text-base font-medium text-foreground truncate">{t.description}</p>
                   <div className="flex flex-wrap items-center gap-2 mt-1">
-                    <span className="text-xs font-medium text-gray-500 bg-gray-50 px-2 py-0.5 rounded-full">{t.category.name}</span>
-                    <span className="text-xs font-medium text-gray-400">{formatDate(t.date)}</span>
+                    <span className="text-xs font-medium text-muted-foreground">{t.category.name}</span>
+                    <time dateTime={new Date(t.date).toISOString().slice(0, 10)} className="text-xs text-muted-foreground"><span className="sm:hidden">{new Date(t.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" })}</span><span className="hidden sm:inline">{formatDate(t.date)}</span></time>
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-1 sm:gap-3 shrink-0">
-                <span className={`text-sm sm:text-base font-bold tabular-nums ${isIncome ? "text-emerald-600" : "text-rose-600"}`}>
+              <div className="flex shrink-0 flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-3">
+                <span className={`text-sm font-semibold tabular-nums ${isIncome ? "text-income" : "text-expense"}`}>
                   {isIncome ? "+" : "-"}{formatCurrency(t.amount, currency)}
                 </span>
+                <div className="flex items-center gap-1">
                 {canEdit && (
                   <Button
                     variant="ghost"
                     size="icon"
                     aria-label={`Edit ${t.description}`}
                     onClick={(e) => { e.stopPropagation(); setEditing(t); }}
-                    className="h-8 w-8 rounded-full text-gray-400 transition-opacity hover:bg-emerald-50 hover:text-emerald-600 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100"
+                    className="h-8 w-8 rounded-full text-muted-foreground transition-opacity hover:bg-primary-soft hover:text-primary "
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
@@ -115,10 +115,11 @@ export function TransactionList({
                   size="icon"
                   aria-label={`Delete ${t.description}`}
                   onClick={(e) => { e.stopPropagation(); setTarget(t); }}
-                  className="h-8 w-8 rounded-full text-gray-400 transition-opacity hover:bg-rose-50 hover:text-rose-500 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100"
+                  className="h-8 w-8 rounded-full text-muted-foreground transition-opacity hover:bg-danger-soft hover:text-destructive "
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
+                </div>
               </div>
             </div>
           );
@@ -129,12 +130,12 @@ export function TransactionList({
         <Dialog open={!!editing} onOpenChange={(open) => !open && setEditing(null)}>
           <DialogContent className="max-h-[92vh] overflow-y-auto rounded-3xl p-5 sm:max-w-lg sm:p-6">
             <DialogHeader className="flex-row items-center gap-3 pr-8">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary-soft text-primary">
                 <Pencil className="h-5 w-5" />
               </div>
               <div className="space-y-0.5">
-                <DialogTitle className="text-lg font-bold text-[#1e293b]">Edit transaction</DialogTitle>
-                <DialogDescription className="text-sm text-gray-400">
+                <DialogTitle className="text-lg font-bold text-foreground">Edit transaction</DialogTitle>
+                <DialogDescription className="text-sm text-muted-foreground">
                   {editing?.accountId
                     ? "Balances of the affected accounts update automatically."
                     : "Update the details of this transaction."}
@@ -168,12 +169,12 @@ export function TransactionList({
         pending={isPending}
       >
         {target && (
-          <div className="flex items-center justify-between rounded-2xl bg-gray-50 p-4">
+          <div className="flex items-center justify-between rounded-2xl bg-muted p-4">
             <div className="min-w-0">
-              <p className="truncate font-bold text-[#1e293b]">{target.description}</p>
-              <p className="text-xs text-gray-400">{target.category.name} · {formatDate(target.date)}</p>
+              <p className="truncate font-bold text-foreground">{target.description}</p>
+              <p className="text-xs text-muted-foreground">{target.category.name} · {formatDate(target.date)}</p>
             </div>
-            <span className={`shrink-0 pl-3 font-bold tabular-nums ${target.type === "INCOME" ? "text-emerald-600" : "text-rose-600"}`}>
+            <span className={`shrink-0 pl-3 font-bold tabular-nums ${target.type === "INCOME" ? "text-income" : "text-expense"}`}>
               {target.type === "INCOME" ? "+" : "-"}{formatCurrency(target.amount, currency)}
             </span>
           </div>

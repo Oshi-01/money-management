@@ -79,7 +79,7 @@ export function LoanForm({ initialData, onSuccess }: { initialData?: EditableLoa
         if (value) formData.append(key, value.toString());
       });
 
-      const result = initialData?.id 
+      const result = initialData?.id
         ? await updateLoan(initialData.id, formData)
         : await createLoan(formData);
 
@@ -88,7 +88,7 @@ export function LoanForm({ initialData, onSuccess }: { initialData?: EditableLoa
       } else {
         setSuccess(initialData?.id ? "Loan updated successfully!" : "Loan recorded successfully!");
         if (!initialData) reset();
-        
+
         if (onSuccess) {
           setTimeout(() => {
             onSuccess();
@@ -105,12 +105,12 @@ export function LoanForm({ initialData, onSuccess }: { initialData?: EditableLoa
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       {error && (
-        <div className="p-3 text-sm text-red-500 bg-red-100 rounded-md dark:bg-red-900/20 dark:text-red-400">
+        <div className="p-3 text-sm text-destructive bg-danger-soft rounded-md">
           {error}
         </div>
       )}
       {success && (
-        <div className="p-3 text-sm text-emerald-500 bg-emerald-100 rounded-md dark:bg-emerald-900/20 dark:text-emerald-400">
+        <div className="p-3 text-sm text-success bg-success-soft rounded-md">
           {success}
         </div>
       )}
@@ -118,8 +118,8 @@ export function LoanForm({ initialData, onSuccess }: { initialData?: EditableLoa
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="col-span-2 space-y-2">
           <Label>Loan Type</Label>
-          <Select 
-            onValueChange={(val) => { if (val) setValue("loanType", val as "BORROWED" | "LENT") }} 
+          <Select
+            onValueChange={(val) => { if (val) setValue("loanType", val as "BORROWED" | "LENT") }}
             value={loanType || "BORROWED"}
           >
             <SelectTrigger>
@@ -132,25 +132,25 @@ export function LoanForm({ initialData, onSuccess }: { initialData?: EditableLoa
               <SelectItem value="LENT">I Lent (Given)</SelectItem>
             </SelectContent>
           </Select>
-          {errors.loanType && <p className="text-sm text-red-500">{errors.loanType.message}</p>}
+          {errors.loanType && <p className="text-sm text-destructive">{errors.loanType.message}</p>}
         </div>
 
         <div className="col-span-2 sm:col-span-1 space-y-2">
           <Label htmlFor="personName">Person/Entity</Label>
           <Input id="personName" placeholder="John Doe" {...register("personName")} />
-          {errors.personName && <p className="text-sm text-red-500">{errors.personName.message}</p>}
+          {errors.personName && <p className="text-sm text-destructive">{errors.personName.message}</p>}
         </div>
 
         <div className="col-span-2 sm:col-span-1 space-y-2">
           <Label htmlFor="principalAmount">Principal Amount</Label>
           <Input id="principalAmount" type="number" step="0.01" {...register("principalAmount", { valueAsNumber: true })} />
-          {errors.principalAmount && <p className="text-sm text-red-500">{errors.principalAmount.message}</p>}
+          {errors.principalAmount && <p className="text-sm text-destructive">{errors.principalAmount.message}</p>}
         </div>
 
         <div className="col-span-2 sm:col-span-1 space-y-2">
           <Label htmlFor="startDate">Start Date</Label>
           <Input id="startDate" type="date" {...register("startDate")} />
-          {errors.startDate && <p className="text-sm text-red-500">{errors.startDate.message}</p>}
+          {errors.startDate && <p className="text-sm text-destructive">{errors.startDate.message}</p>}
         </div>
 
         <div className="col-span-2 sm:col-span-1 space-y-2">
@@ -165,11 +165,11 @@ export function LoanForm({ initialData, onSuccess }: { initialData?: EditableLoa
       </div>
 
       <div className="flex items-center space-x-2 py-2">
-        <input 
-          type="checkbox" 
-          id="includeInTotal" 
-          className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-          {...register("includeInTotal")} 
+        <input
+          type="checkbox"
+          id="includeInTotal"
+          className="w-4 h-4 rounded border-input text-info focus:ring-blue-500"
+          {...register("includeInTotal")}
         />
         <Label htmlFor="includeInTotal" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
           Include in total amount calculation

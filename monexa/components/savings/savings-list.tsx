@@ -13,7 +13,7 @@ interface SavingsGoal {
 export function SavingsList({ goals, currency }: { goals: SavingsGoal[], currency: string }) {
   if (goals.length === 0) {
     return (
-      <div className="flex h-48 w-full flex-col items-center justify-center rounded-lg border border-dashed bg-white dark:bg-gray-950/50">
+      <div className="flex h-48 w-full flex-col items-center justify-center rounded-lg border border-dashed bg-card">
         <p className="text-sm text-muted-foreground">You haven't set any savings goals yet.</p>
       </div>
     );

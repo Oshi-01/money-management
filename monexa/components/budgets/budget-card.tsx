@@ -57,7 +57,7 @@ export function BudgetCard({ budget, currency }: { budget: Budget, currency: str
         <Button
           variant="ghost"
           size="icon"
-          className="-mt-2 -mr-2 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950 h-8 w-8"
+          className="-mt-2 -mr-2 text-destructive hover:text-destructive hover:bg-danger-soft h-8 w-8"
           onClick={handleDelete}
           disabled={isPending}
         >
@@ -67,25 +67,25 @@ export function BudgetCard({ budget, currency }: { budget: Budget, currency: str
       <CardContent className="flex-1 flex flex-col justify-end pt-4">
         <div className="flex justify-between items-end mb-2">
           <div>
-            <div className={`text-2xl font-bold ${budget.isOverBudget ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-gray-100'}`}>
+            <div className={`text-2xl font-bold ${budget.isOverBudget ? 'text-warning' : 'text-foreground'}`}>
               {formatCurrency(budget.spentAmount, currency)}
             </div>
             <div className="text-xs text-muted-foreground mt-0.5">
               spent this month
             </div>
           </div>
-          <div className={`text-sm font-semibold ${budget.isOverBudget ? 'text-red-500' : ''}`}>
+          <div className={`text-sm font-semibold ${budget.isOverBudget ? 'text-warning' : ''}`}>
             {percentSpent}%
           </div>
         </div>
 
         <Progress
           value={percentSpent}
-          className={`h-2 mt-2 ${budget.isOverBudget ? 'bg-red-100 dark:bg-red-950 [&>div]:bg-red-500' : ''}`}
+          className={`h-2 mt-2 ${budget.isOverBudget ? 'bg-warning-soft [&>div]:bg-warning' : ''}`}
         />
 
         {budget.isOverBudget && (
-          <div className="mt-4 text-xs text-red-500 flex items-center bg-red-50 dark:bg-red-950/30 p-2 rounded-md">
+          <div className="mt-4 text-xs text-warning flex items-center bg-warning-soft p-2 rounded-md">
             <AlertCircle className="h-3 w-3 mr-1.5 shrink-0" />
             You've exceeded your budget by {formatCurrency(budget.spentAmount - budget.amount, currency)}
           </div>

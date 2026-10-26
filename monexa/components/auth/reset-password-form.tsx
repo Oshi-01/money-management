@@ -88,7 +88,7 @@ export function ResetPasswordForm() {
         title="Password updated"
         action={
           <Link href="/login" className="block">
-            <Button className="h-11 w-full rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">
+            <Button className="h-11 w-full rounded-xl bg-primary text-primary-foreground hover:bg-primary-hover">
               Sign in
             </Button>
           </Link>

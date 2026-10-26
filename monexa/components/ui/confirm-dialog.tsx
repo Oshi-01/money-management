@@ -41,13 +41,13 @@ export function ConfirmDialog({
       <DialogContent className="sm:max-w-md rounded-3xl p-6" showCloseButton={!pending}>
         <DialogHeader className="items-center text-center sm:items-start sm:text-left">
           <div className="flex items-start gap-4">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-rose-50 text-rose-600">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-danger-soft text-destructive">
               <AlertTriangle className="h-5 w-5" />
             </div>
             <div className="space-y-1.5 text-left">
-              <DialogTitle className="text-lg font-bold text-[#1e293b]">{title}</DialogTitle>
+              <DialogTitle className="text-lg font-bold text-foreground">{title}</DialogTitle>
               {description && (
-                <DialogDescription className="text-sm leading-relaxed text-gray-500">
+                <DialogDescription className="text-sm leading-relaxed text-muted-foreground">
                   {description}
                 </DialogDescription>
               )}
@@ -67,7 +67,7 @@ export function ConfirmDialog({
             Cancel
           </Button>
           <Button
-            className="h-11 rounded-full bg-rose-600 px-6 text-white hover:bg-rose-700"
+            className="h-11 rounded-full bg-destructive px-6 text-primary-foreground hover:bg-destructive/90"
             onClick={onConfirm}
             disabled={pending || confirmDisabled}
           >

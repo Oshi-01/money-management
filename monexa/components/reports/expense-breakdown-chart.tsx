@@ -1,67 +1,48 @@
-"use client";
-
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip, Legend } from "recharts";
 import { formatCurrency } from "@/lib/utils";
 
-const COLORS = ['#f43f5e', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#ec4899', '#64748b'];
-
 interface ExpenseBreakdownProps {
-  data: {
-    name: string;
-    value: number;
-  }[];
+  data: { name: string; value: number; percent?: number }[];
   currency: string;
-  /** e.g. "September 2026" */
   periodLabel?: string;
+  title?: string;
 }
 
-export function ExpenseBreakdownChart({ data, currency, periodLabel }: ExpenseBreakdownProps) {
+/** One spending color; category names and values identify each bar. */
+export function ExpenseBreakdownChart({ data, currency, periodLabel, title = "Expense Breakdown" }: ExpenseBreakdownProps) {
+  const total = data.reduce((sum, row) => sum + row.value, 0);
+  const rows = [...data].sort((a, b) => b.value - a.value);
   return (
-    <div className="flex flex-col h-full w-full">
+    <section className="flex h-full w-full flex-col">
       <div className="mb-6">
-        <h3 className="text-xl font-bold text-[#1e293b]">Expense Breakdown</h3>
-        <p className="text-sm text-gray-400">Where your money went{periodLabel ? ` in ${periodLabel}` : " this month"}</p>
+        <h3 className="text-xl font-bold text-foreground">{title}</h3>
+        <p className="text-sm text-muted-foreground">{periodLabel ? `Spending in ${periodLabel}` : "Share of recorded expenses"}</p>
       </div>
-      <div className="flex-1 pb-6">
-        {data.length === 0 ? (
-          <div className="flex h-[300px] w-full flex-col items-center justify-center text-sm text-gray-400 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
-            <p>No expenses recorded{periodLabel ? ` in ${periodLabel}` : " this month"}.</p>
-          </div>
-        ) : (
-          <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={data}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={70}
-                  outerRadius={100}
-                  paddingAngle={2}
-                  dataKey="value"
-                  stroke="none"
-                >
-                  {data.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  formatter={(value: any) => formatCurrency(Number(value), currency)}
-                  contentStyle={{ borderRadius: "16px", border: "none", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)" }}
-                />
-                <Legend 
-                  layout="horizontal" 
-                  verticalAlign="bottom" 
-                  align="center"
-                  wrapperStyle={{ paddingTop: "20px" }}
-                  iconType="circle"
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        )}
-      </div>
-    </div>
+      {rows.length === 0 ? (
+        <div className="flex min-h-48 flex-1 items-center justify-center rounded-xl border border-dashed border-border bg-muted p-6 text-sm text-muted-foreground">
+          No expenses recorded{periodLabel ? ` in ${periodLabel}` : ""}.
+        </div>
+      ) : (
+        <ol className="space-y-5">
+          {rows.map((row, index) => {
+            // A top-categories summary supplies shares of ALL spending, including
+            // categories outside this list. Preserve that denominator.
+            const share = row.percent ?? (total > 0 ? (row.value / total) * 100 : 0);
+            return (
+              <li key={`${row.name}-${index}`} className="space-y-2">
+                <div className="flex items-baseline justify-between gap-4 text-sm">
+                  <span className="min-w-0 break-words font-medium text-foreground">{row.name}</span>
+                  <span className="shrink-0 text-right tabular-nums text-secondary-foreground">
+                    {formatCurrency(row.value, currency)} <span className="ml-2 text-xs text-muted-foreground">{Math.round(share)}%</span>
+                  </span>
+                </div>
+                <div aria-hidden="true" className="h-1.5 overflow-hidden rounded-full bg-muted">
+                  <div className="h-full rounded-full bg-expense" style={{ width: `${share}%` }} />
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+      )}
+    </section>
   );
 }

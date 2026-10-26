@@ -32,21 +32,19 @@ export default async function DashboardPage() {
     currency,
     spendingsBreakdown,
     savingsTrend,
-    incomeTrend,
-    expenseTrend,
     savingsGoals,
     budgets,
     trends
   } = dashboardData;
 
   return (
-    <div className="w-full flex flex-col gap-10">
+    <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-6">
 
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="page-header">
         <div className="flex flex-col">
-          <h1 className="text-3xl font-bold text-[#1e293b]">Dashboard</h1>
-          <p className="text-gray-500 font-medium mt-1">Your money at a glance.</p>
+          <h1 className="page-title">Dashboard</h1>
+          <p className="page-description">Your money at a glance.</p>
         </div>
         <NewTransactionDialog
           categories={categories}
@@ -56,48 +54,31 @@ export default async function DashboardPage() {
         />
       </div>
 
-      {/* Row 1: Stat Cards and Balance Trend */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-5 xl:col-span-4 h-full min-h-75">
-          <EnfixStatCards
-            balance={balance}
-            currency={currency}
-            trends={trends}
-            savingsTrend={savingsTrend}
-            incomeTrend={incomeTrend}
-            expenseTrend={expenseTrend}
-          />
-        </div>
-        <div className="lg:col-span-7 xl:col-span-8 h-full min-h-75 pt-4 lg:pt-0">
-          <EnfixBalanceTrend balance={balance} currency={currency} savingsTrend={savingsTrend} trends={trends} />
-        </div>
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
+        <div className="xl:col-span-4"><EnfixStatCards balance={balance} currency={currency} trends={trends} /></div>
+        <div className="min-h-80 xl:col-span-8"><EnfixBalanceTrend currency={currency} savingsTrend={savingsTrend} trends={trends} /></div>
       </div>
 
-      {/* Row 2: Transaction History and Savings Goals */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-8">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
+        <div className="xl:col-span-8">
           <EnfixTransactionHistory transactions={recentTransactions} currency={currency} />
         </div>
-        <div className="lg:col-span-4 pt-4 lg:pt-0">
-          <EnfixSavingsGoals goals={savingsGoals} />
-        </div>
+        <div className="xl:col-span-4"><EnfixSavingsGoals goals={savingsGoals} currency={currency} /></div>
       </div>
 
       {/* Row 3: Monthly Charts and Budgets */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-5 h-full min-h-87.5">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
+        <div className="min-h-80 xl:col-span-5">
           <EnfixIncomeExpenseChart data={chartData} currency={currency} />
         </div>
-        <div className="lg:col-span-4 h-full">
+        <div className="xl:col-span-4">
           <EnfixMonthlyBudgets
             budgets={budgets}
             categories={categories}
             currency={currency}
           />
         </div>
-        <div className="lg:col-span-3 h-full pt-4 lg:pt-0">
-          <EnfixMonthlyExpenses breakdown={spendingsBreakdown} currency={currency} />
-        </div>
+        <div className="app-panel p-5 sm:p-6 xl:col-span-3"><EnfixMonthlyExpenses breakdown={spendingsBreakdown} currency={currency} /></div>
       </div>
 
     </div>

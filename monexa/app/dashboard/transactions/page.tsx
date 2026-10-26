@@ -5,7 +5,7 @@ import { getEnfixBudgetsData } from "@/app/actions/budgets";
 import { TransactionList } from "@/components/transactions/transaction-list";
 import { TransactionFilters } from "@/components/transactions/transaction-filters";
 import { TransactionsPagination } from "@/components/transactions/transactions-pagination";
-import { ArrowLeftRight } from "lucide-react";
+import { PageHeader } from "@/components/dashboard/page-header";
 import { toMonthStr } from "@/lib/dates";
 import { formatCurrency } from "@/lib/utils";
 import { NewTransactionDialog } from "@/components/transactions/new-transaction-dialog";
@@ -51,46 +51,35 @@ export default async function TransactionsPage(
   const { totals, totalCount, page } = transactionsData;
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 pb-8">
+    <div className="space-y-6 pb-8">
 
-      {/* Header in a white card */}
-      <div className="bg-white rounded-4xl p-4 sm:p-6 lg:p-8 shadow-sm border border-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
-            <ArrowLeftRight className="h-6 w-6" />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold text-[#1e293b]">Transactions</h2>
-            <p className="text-sm text-gray-400">Track and manage your income and expenses.</p>
-          </div>
-        </div>
-
+      <PageHeader title="Transactions" description="The everyday details of your money.">
         <NewTransactionDialog
           categories={categories}
           accounts={accounts}
           budgets={budgetData.budgets}
           currency={currency}
         />
-      </div>
+      </PageHeader>
 
       {/* Full Width List */}
-      <div className="bg-white rounded-4xl p-4 sm:p-6 lg:p-8 shadow-sm border border-gray-50 space-y-6">
+      <div className="app-panel p-4 sm:p-6 space-y-6">
         <TransactionFilters categories={categories} />
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-          <h3 className="text-xl font-bold text-[#1e293b]">
+          <h3 className="text-lg font-semibold tracking-tight text-foreground">
             {isFiltered ? "Matching transactions" : "All transactions"}
           </h3>
           {totalCount > 0 && (
             <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
-              <span className="text-gray-400">
-                Income <span className="font-bold text-emerald-600 tabular-nums">+{formatCurrency(totals.income, currency)}</span>
+              <span className="text-muted-foreground">
+                Income <span className="font-bold text-income tabular-nums">+{formatCurrency(totals.income, currency)}</span>
               </span>
-              <span className="text-gray-400">
-                Expenses <span className="font-bold text-rose-600 tabular-nums">-{formatCurrency(totals.expense, currency)}</span>
+              <span className="text-muted-foreground">
+                Expenses <span className="font-bold text-expense tabular-nums">-{formatCurrency(totals.expense, currency)}</span>
               </span>
-              <span className="text-gray-400">
-                Net <span className="font-bold text-[#1e293b] tabular-nums">{formatCurrency(totals.income - totals.expense, currency)}</span>
+              <span className="text-muted-foreground">
+                Net <span className="font-bold text-foreground tabular-nums">{formatCurrency(totals.income - totals.expense, currency)}</span>
               </span>
             </div>
           )}

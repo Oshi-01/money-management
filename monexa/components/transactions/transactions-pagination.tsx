@@ -39,30 +39,30 @@ export function TransactionsPagination({ page, pageSize, totalCount, params }: P
 
   return (
     <div className="mt-6 flex flex-col items-center justify-between gap-3 sm:flex-row">
-      <p className="text-sm text-gray-400">
-        Showing <span className="font-semibold text-gray-600">{first}–{last}</span> of{" "}
-        <span className="font-semibold text-gray-600">{totalCount}</span>
+      <p className="text-sm text-muted-foreground">
+        Showing <span className="font-semibold text-secondary-foreground">{first}–{last}</span> of{" "}
+        <span className="font-semibold text-secondary-foreground">{totalCount}</span>
       </p>
 
       {totalPages > 1 && (
         <nav aria-label="Pagination" className="flex items-center gap-1">
           {page > 1 ? (
-            <Link href={href(page - 1)} aria-label="Previous page" className={`${btn} text-gray-500 hover:bg-gray-100`}>
+            <Link href={href(page - 1)} aria-label="Previous page" className={`${btn} text-muted-foreground hover:bg-muted`}>
               <ChevronLeft className="h-4 w-4" />
             </Link>
           ) : (
-            <span className={`${btn} cursor-not-allowed text-gray-300`} aria-hidden="true"><ChevronLeft className="h-4 w-4" /></span>
+            <span className={`${btn} cursor-not-allowed text-muted-foreground`} aria-hidden="true"><ChevronLeft className="h-4 w-4" /></span>
           )}
 
           {pageWindow(page, totalPages).map((p, i) =>
             p === "gap" ? (
-              <span key={`gap-${i}`} className="px-1 text-gray-300">…</span>
+              <span key={`gap-${i}`} className="px-1 text-muted-foreground">…</span>
             ) : (
               <Link
                 key={p}
                 href={href(p)}
                 aria-current={p === page ? "page" : undefined}
-                className={`${btn} ${p === page ? "bg-emerald-600 text-white" : "text-gray-500 hover:bg-gray-100"}`}
+                className={`${btn} ${p === page ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
               >
                 {p}
               </Link>
@@ -70,11 +70,11 @@ export function TransactionsPagination({ page, pageSize, totalCount, params }: P
           )}
 
           {page < totalPages ? (
-            <Link href={href(page + 1)} aria-label="Next page" className={`${btn} text-gray-500 hover:bg-gray-100`}>
+            <Link href={href(page + 1)} aria-label="Next page" className={`${btn} text-muted-foreground hover:bg-muted`}>
               <ChevronRight className="h-4 w-4" />
             </Link>
           ) : (
-            <span className={`${btn} cursor-not-allowed text-gray-300`} aria-hidden="true"><ChevronRight className="h-4 w-4" /></span>
+            <span className={`${btn} cursor-not-allowed text-muted-foreground`} aria-hidden="true"><ChevronRight className="h-4 w-4" /></span>
           )}
         </nav>
       )}

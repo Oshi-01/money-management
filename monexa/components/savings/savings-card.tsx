@@ -39,17 +39,17 @@ export function SavingsCard({ goal, currency }: SavingsCardProps) {
   };
 
   const percentComplete = Math.min(
-    Math.round((goal.savedAmount / goal.targetAmount) * 100), 
+    Math.round((goal.savedAmount / goal.targetAmount) * 100),
     100
   );
-  
+
   const isComplete = percentComplete === 100;
 
   return (
     <Card className="flex flex-col border-none shadow-sm h-full hover:shadow-md transition-shadow relative overflow-hidden">
       {isComplete && (
         <div className="absolute top-0 right-0 w-16 h-16 pointer-events-none">
-          <div className="absolute transform rotate-45 bg-emerald-500 text-white text-[10px] font-bold py-1 right-[-35px] top-[32px] w-[170px] text-center shadow-sm">
+          <div className="absolute transform rotate-45 bg-success text-primary-foreground text-[10px] font-bold py-1 right-[-35px] top-[32px] w-[170px] text-center shadow-sm">
             COMPLETED
           </div>
         </div>
@@ -58,9 +58,9 @@ export function SavingsCard({ goal, currency }: SavingsCardProps) {
         <div className="space-y-1">
           <CardTitle className="text-base font-semibold flex items-center">
             {isComplete ? (
-              <CheckCircle2 className="mr-2 h-4 w-4 text-emerald-500" />
+              <CheckCircle2 className="mr-2 h-4 w-4 text-success" />
             ) : (
-              <Target className="mr-2 h-4 w-4 text-blue-500" />
+              <Target className="mr-2 h-4 w-4 text-info" />
             )}
             {goal.title}
           </CardTitle>
@@ -74,7 +74,7 @@ export function SavingsCard({ goal, currency }: SavingsCardProps) {
           <Button
             variant="ghost"
             size="icon"
-            className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950 h-8 w-8"
+            className="text-destructive hover:text-destructive hover:bg-danger-soft h-8 w-8"
             onClick={handleDelete}
             disabled={isPending}
           >
@@ -85,7 +85,7 @@ export function SavingsCard({ goal, currency }: SavingsCardProps) {
       <CardContent className="flex-1 flex flex-col justify-end pt-4">
         <div className="flex justify-between items-end mb-2">
           <div>
-            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            <div className="text-2xl font-bold text-foreground">
               {formatCurrency(goal.savedAmount, currency)}
             </div>
             <div className="text-xs text-muted-foreground mt-0.5">
@@ -96,30 +96,30 @@ export function SavingsCard({ goal, currency }: SavingsCardProps) {
             {percentComplete}%
           </div>
         </div>
-        
-        <Progress 
-          value={percentComplete} 
-          className="h-2 mt-2 mb-4" 
+
+        <Progress
+          value={percentComplete}
+          className="h-2 mt-2 mb-4"
         />
-        
+
         <Dialog open={isAddFundsOpen} onOpenChange={setIsAddFundsOpen}>
           <DialogTrigger render={
-            <Button 
-              variant={isComplete ? "outline" : "default"} 
+            <Button
+              variant={isComplete ? "outline" : "default"}
               className="w-full mt-auto"
               disabled={isComplete}
             />
           }>
-            <PlusCircle className="mr-2 h-4 w-4" /> 
+            <PlusCircle className="mr-2 h-4 w-4" />
             {isComplete ? "Goal Reached" : "Add Funds"}
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>Add Funds to {goal.title}</DialogTitle>
             </DialogHeader>
-            <AddFundsForm 
-              goalId={goal.id} 
-              onSuccess={() => setIsAddFundsOpen(false)} 
+            <AddFundsForm
+              goalId={goal.id}
+              onSuccess={() => setIsAddFundsOpen(false)}
             />
           </DialogContent>
         </Dialog>

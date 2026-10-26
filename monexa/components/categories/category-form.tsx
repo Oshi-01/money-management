@@ -67,7 +67,7 @@ export function CategoryForm({
       <div className="space-y-2">
         <Label htmlFor="name">Category Name</Label>
         <Input id="name" placeholder="e.g. Groceries" autoFocus {...register("name")} />
-        {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
+        {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
       </div>
 
       <div className="space-y-2">
@@ -82,9 +82,9 @@ export function CategoryForm({
           </SelectContent>
         </Select>
         {isEdit && (
-          <p className="text-xs text-gray-400">The type can only be changed while no transactions or budgets use this category.</p>
+          <p className="text-xs text-muted-foreground">The type can only be changed while no transactions or budgets use this category.</p>
         )}
-        {errors.type && <p className="text-sm text-red-500">{errors.type.message}</p>}
+        {errors.type && <p className="text-sm text-destructive">{errors.type.message}</p>}
       </div>
 
       <Button type="submit" disabled={isPending} className="w-full">

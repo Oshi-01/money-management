@@ -52,7 +52,7 @@ export function AddLoanAmountForm({
         return;
       }
 
-      toast.success(result.success);
+      if ("success" in result) toast.success(result.success);
       onSuccess?.();
     });
   };
@@ -62,7 +62,7 @@ export function AddLoanAmountForm({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       {error && (
-        <div className="rounded-md bg-red-100 p-3 text-sm text-red-500 dark:bg-red-900/20 dark:text-red-400">
+        <div className="rounded-md bg-danger-soft p-3 text-sm text-destructive">
           {error}
         </div>
       )}
@@ -77,13 +77,13 @@ export function AddLoanAmountForm({
           autoFocus
           {...register("amount", { valueAsNumber: true })}
         />
-        {errors.amount && <p className="text-sm text-red-500">{errors.amount.message}</p>}
+        {errors.amount && <p className="text-sm text-destructive">{errors.amount.message}</p>}
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="additionalAmountDate">Date</Label>
         <Input id="additionalAmountDate" type="date" {...register("activityDate")} />
-        {errors.activityDate && <p className="text-sm text-red-500">{errors.activityDate.message}</p>}
+        {errors.activityDate && <p className="text-sm text-destructive">{errors.activityDate.message}</p>}
       </div>
 
       <div className="space-y-2">

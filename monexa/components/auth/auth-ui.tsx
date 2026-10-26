@@ -11,8 +11,8 @@ import { cn } from "@/lib/utils";
 export function AuthHeader({ title, description }: { title: string; description: string }) {
   return (
     <div className="mb-8 space-y-2">
-      <h1 className="text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">{title}</h1>
-      <p className="text-sm text-gray-500 dark:text-gray-400">{description}</p>
+      <h1 className="text-3xl font-semibold tracking-tight text-foreground">{title}</h1>
+      <p className="text-sm text-muted-foreground">{description}</p>
     </div>
   );
 }
@@ -25,8 +25,8 @@ export function AuthAlert({ tone, children }: { tone: "error" | "success"; child
       className={cn(
         "flex items-start gap-2.5 rounded-xl border p-3 text-sm",
         tone === "error"
-          ? "border-red-200 bg-red-50 text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300"
-          : "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300",
+          ? "border-danger-border bg-danger-soft text-destructive"
+          : "border-success-border bg-success-soft text-success",
       )}
     >
       <Icon className="mt-0.5 h-4 w-4 shrink-0" />
@@ -48,25 +48,25 @@ export function AuthField({ id, label, error, hint, action, children }: FieldPro
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <Label htmlFor={id} className="text-gray-700 dark:text-gray-300">
+        <Label htmlFor={id} className="text-secondary-foreground">
           {label}
         </Label>
         {action}
       </div>
       {children}
       {error ? (
-        <p id={`${id}-error`} className="text-xs text-red-600 dark:text-red-400">
+        <p id={`${id}-error`} className="text-xs text-destructive">
           {error}
         </p>
       ) : (
-        hint && <p className="text-xs text-gray-500 dark:text-gray-400">{hint}</p>
+        hint && <p className="text-xs text-muted-foreground">{hint}</p>
       )}
     </div>
   );
 }
 
 const inputClass =
-  "h-11 rounded-xl border-gray-200 bg-white pl-10 shadow-xs focus-visible:border-emerald-500 focus-visible:ring-emerald-500/20 dark:border-white/10 dark:bg-white/5";
+  "h-11 rounded-xl border-border bg-card pl-10 shadow-xs focus-visible:border-primary focus-visible:ring-primary/20";
 
 type IconInputProps = React.ComponentProps<"input"> & { icon: LucideIcon; invalid?: boolean };
 
@@ -76,7 +76,7 @@ export const IconInput = forwardRef<HTMLInputElement, IconInputProps>(function I
 ) {
   return (
     <div className="relative">
-      <Icon className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-gray-400" />
+      <Icon className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
       <Input
         ref={ref}
         id={id}
@@ -101,7 +101,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, Omit<IconInputProps, "
         type="button"
         onClick={() => setVisible((v) => !v)}
         aria-label={visible ? "Hide password" : "Show password"}
-        className="absolute top-1/2 right-2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-white/10 dark:hover:text-gray-200"
+        className="absolute top-1/2 right-2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-secondary-foreground"
       >
         {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
       </button>
@@ -114,7 +114,7 @@ export function AuthSubmit({ pending, children }: { pending: boolean; children: 
     <Button
       type="submit"
       disabled={pending}
-      className="h-11 w-full rounded-xl bg-emerald-600 text-white shadow-sm shadow-emerald-600/20 hover:bg-emerald-700"
+      className="h-11 w-full rounded-xl bg-primary text-primary-foreground shadow-sm hover:bg-primary-hover"
     >
       {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
       {children}
@@ -124,9 +124,9 @@ export function AuthSubmit({ pending, children }: { pending: boolean; children: 
 
 export function AuthFooterLink({ prompt, href, label }: { prompt: string; href: string; label: string }) {
   return (
-    <p className="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
+    <p className="mt-8 text-center text-sm text-muted-foreground">
       {prompt}{" "}
-      <Link href={href} className="font-medium text-emerald-700 hover:underline dark:text-emerald-400">
+      <Link href={href} className="font-medium text-primary hover:underline">
         {label}
       </Link>
     </p>
@@ -153,15 +153,15 @@ export function AuthStatus({
         className={cn(
           "mx-auto flex h-14 w-14 items-center justify-center rounded-2xl",
           tone === "success"
-            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400"
-            : "bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400",
+            ? "bg-success-soft text-success"
+            : "bg-danger-soft text-destructive",
         )}
       >
         <Icon className="h-7 w-7" />
       </span>
       <div className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">{title}</h1>
-        <p className="text-sm leading-relaxed text-gray-500 dark:text-gray-400">{children}</p>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">{title}</h1>
+        <p className="text-sm leading-relaxed text-muted-foreground">{children}</p>
       </div>
       {action}
     </div>

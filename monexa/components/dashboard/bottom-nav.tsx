@@ -9,23 +9,24 @@ export function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-2 py-2 z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-      <nav className="flex items-center overflow-x-auto no-scrollbar gap-2 px-2 pb-safe">
-        {navigation.map((item) => {
+    <div className="app-panel fixed bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] left-3 right-3 z-40 px-2 py-2 lg:hidden">
+      <nav aria-label="Quick navigation" className="grid grid-cols-5 gap-1 pb-safe">
+        {navigation.filter(item => ["Dashboard", "Transactions", "Loans", "Budgets", "Savings Goals"].includes(item.name)).map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link
               key={item.name}
               href={item.href}
+              aria-current={isActive ? "page" : undefined}
               className={cn(
-                "flex flex-col items-center justify-center min-w-[72px] py-1.5 px-2 rounded-2xl transition-all duration-200",
-                isActive 
-                  ? "bg-emerald-50 text-emerald-600" 
-                  : "text-gray-400 hover:text-gray-600 hover:bg-gray-50"
+                "flex min-w-0 flex-col items-center justify-center rounded-lg px-1 py-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                isActive
+                  ? "bg-primary-soft text-primary"
+                  : "text-muted-foreground hover:text-secondary-foreground hover:bg-muted"
               )}
             >
               <item.icon className="h-5 w-5 mb-1" strokeWidth={isActive ? 2.5 : 2} />
-              <span className="text-[10px] font-medium">{item.name}</span>
+              <span className="text-[9px] font-medium min-[360px]:text-[10px]">{item.name === "Savings Goals" ? "Savings" : item.name}</span>
             </Link>
           );
         })}

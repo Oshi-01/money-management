@@ -105,39 +105,39 @@ export function EnfixLoansClient({ loans, currency }: { loans: LoanWithRepayment
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "PAID": return <CheckCircle2 className="w-4 h-4 text-emerald-500" />;
-      case "OVERDUE": return <AlertCircle className="w-4 h-4 text-rose-500" />;
-      default: return <Clock className="w-4 h-4 text-amber-500" />;
+      case "PAID": return <CheckCircle2 className="w-4 h-4 text-success" />;
+      case "OVERDUE": return <AlertCircle className="w-4 h-4 text-warning" />;
+      default: return <Clock className="w-4 h-4 text-warning" />;
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "PAID": return "bg-emerald-50 text-emerald-600";
-      case "OVERDUE": return "bg-rose-50 text-rose-600";
-      default: return "bg-amber-50 text-amber-600";
+      case "PAID": return "bg-success-soft text-success";
+      case "OVERDUE": return "bg-warning-soft text-warning";
+      default: return "bg-warning-soft text-warning";
     }
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 pb-8">
+    <div className="space-y-6  pb-8">
 
       {/* Header & Stats in a white card */}
-      <div className="bg-white rounded-4xl p-8 shadow-sm border border-gray-50">
+      <div className="app-panel p-5 sm:p-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-muted text-secondary-foreground">
               <Landmark className="h-6 w-6" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-[#1e293b]">Loans</h2>
-              <p className="text-sm text-gray-400">Track money you owe and money owed to you.</p>
+              <h2 className="text-2xl font-bold text-foreground">Loans</h2>
+              <p className="text-sm text-muted-foreground">Track money you owe and money owed to you.</p>
             </div>
           </div>
 
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger render={
-              <Button className="bg-[#1e293b] hover:bg-gray-800 text-white rounded-full px-6 h-11">
+              <Button className="bg-primary hover:bg-primary-hover text-primary-foreground rounded-full px-6 h-11">
                 <Plus className="mr-2 h-4 w-4" /> New Record
               </Button>
             } />
@@ -151,33 +151,33 @@ export function EnfixLoansClient({ loans, currency }: { loans: LoanWithRepayment
         </div>
 
         <div className="grid gap-4 md:grid-cols-3">
-          <div className="bg-rose-50 rounded-2xl p-5 flex items-center justify-between">
+          <div className="bg-card border border-border rounded-2xl p-5 flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-rose-600/80 mb-1">Total Borrowed</p>
-              <div className="text-2xl font-bold text-rose-600">{formatCurrency(totalBorrowed, currency)}</div>
+              <p className="text-sm font-medium text-muted-foreground mb-1">Total Borrowed</p>
+              <div className="text-2xl font-bold text-expense">{formatCurrency(totalBorrowed, currency)}</div>
             </div>
-            <div className="h-10 w-10 rounded-full bg-white flex items-center justify-center shadow-sm">
-              <ArrowDownRight className="h-5 w-5 text-rose-500" />
+            <div className="h-10 w-10 rounded-full bg-card flex items-center justify-center shadow-sm">
+              <ArrowDownRight className="h-5 w-5 text-muted-foreground" />
             </div>
           </div>
 
-          <div className="bg-emerald-50 rounded-2xl p-5 flex items-center justify-between">
+          <div className="bg-card border border-border rounded-2xl p-5 flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-emerald-600/80 mb-1">Total Lent</p>
-              <div className="text-2xl font-bold text-emerald-600">{formatCurrency(totalLent, currency)}</div>
+              <p className="text-sm font-medium text-muted-foreground mb-1">Total Lent</p>
+              <div className="text-2xl font-bold text-income">{formatCurrency(totalLent, currency)}</div>
             </div>
-            <div className="h-10 w-10 rounded-full bg-white flex items-center justify-center shadow-sm">
-              <ArrowUpRight className="h-5 w-5 text-emerald-500" />
+            <div className="h-10 w-10 rounded-full bg-card flex items-center justify-center shadow-sm">
+              <ArrowUpRight className="h-5 w-5 text-muted-foreground" />
             </div>
           </div>
 
-          <div className="bg-indigo-50 rounded-2xl p-5 flex items-center justify-between">
+          <div className="bg-card border border-border rounded-2xl p-5 flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-indigo-600/80 mb-1">Net Position</p>
-              <div className="text-2xl font-bold text-indigo-600">{netOutstanding > 0 ? "+" : ""}{formatCurrency(netOutstanding, currency)}</div>
+              <p className="text-sm font-medium text-muted-foreground mb-1">Net Position</p>
+              <div className={`text-2xl font-bold ${netOutstanding > 0 ? "text-income" : netOutstanding < 0 ? "text-expense" : "text-foreground"}`}>{netOutstanding > 0 ? "+" : ""}{formatCurrency(netOutstanding, currency)}</div>
             </div>
-            <div className="h-10 w-10 rounded-full bg-white flex items-center justify-center shadow-sm">
-              <HandCoins className="h-5 w-5 text-indigo-500" />
+            <div className="h-10 w-10 rounded-full bg-card flex items-center justify-center shadow-sm">
+              <HandCoins className="h-5 w-5 text-muted-foreground" />
             </div>
           </div>
         </div>
@@ -188,18 +188,18 @@ export function EnfixLoansClient({ loans, currency }: { loans: LoanWithRepayment
 
         {/* Left List */}
         <div className="w-full lg:w-87.5 shrink-0 flex flex-col gap-4">
-          <div className="bg-white rounded-4xl p-4 sm:p-6 shadow-sm border border-gray-50 h-auto lg:h-150 flex flex-col">
+          <div className="bg-card rounded-3xl p-4 sm:p-6 shadow-sm border border-border h-auto lg:h-150 flex flex-col">
 
-            <div className="flex bg-gray-50 rounded-full p-1 mb-6">
+            <div className="flex bg-muted rounded-full p-1 mb-6">
               <button
                 onClick={() => { setActiveTab("BORROWED"); setSelectedLoanId(null); }}
-                className={`flex-1 py-2 px-4 text-sm font-bold rounded-full transition-all ${activeTab === "BORROWED" ? 'bg-white text-[#1e293b] shadow-sm' : 'text-gray-400'}`}
+                className={`flex-1 py-2 px-4 text-sm font-bold rounded-full transition-all ${activeTab === "BORROWED" ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground'}`}
               >
                 Borrowed
               </button>
               <button
                 onClick={() => { setActiveTab("LENT"); setSelectedLoanId(null); }}
-                className={`flex-1 py-2 px-4 text-sm font-bold rounded-full transition-all ${activeTab === "LENT" ? 'bg-white text-[#1e293b] shadow-sm' : 'text-gray-400'}`}
+                className={`flex-1 py-2 px-4 text-sm font-bold rounded-full transition-all ${activeTab === "LENT" ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground'}`}
               >
                 Lent
               </button>
@@ -207,7 +207,7 @@ export function EnfixLoansClient({ loans, currency }: { loans: LoanWithRepayment
 
             <div className="flex-1 overflow-y-auto pr-2 space-y-3 scrollbar-thin">
               {activeLoans.length === 0 ? (
-                <div className="text-center py-10 text-gray-400 text-sm">
+                <div className="text-center py-10 text-muted-foreground text-sm">
                   No {activeTab.toLowerCase()} loans found.
                 </div>
               ) : (
@@ -222,25 +222,25 @@ export function EnfixLoansClient({ loans, currency }: { loans: LoanWithRepayment
                       key={loan.id}
                       onClick={() => setSelectedLoanId(loan.id)}
                       className={`w-full text-left p-4 rounded-2xl transition-all border ${isSelected
-                        ? 'bg-indigo-50 border-indigo-100'
-                        : 'bg-white border-gray-100 hover:border-indigo-100 hover:bg-gray-50'
+                        ? 'bg-primary-soft border-primary-border'
+                        : 'bg-card border-border hover:border-primary-border hover:bg-muted'
                         }`}
                     >
                       <div className="flex justify-between items-start mb-2">
                         <div>
-                          <h4 className={`font-bold ${isSelected ? 'text-indigo-900' : 'text-[#1e293b]'}`}>{loan.personName}</h4>
+                          <h4 className={`font-bold ${isSelected ? 'text-foreground' : 'text-foreground'}`}>{loan.personName}</h4>
                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full mt-1 inline-block ${getStatusColor(loan.status)}`}>
                             {loan.status}
                           </span>
                         </div>
-                        <div className={`font-bold ${isSelected ? 'text-indigo-600' : 'text-[#1e293b]'}`}>
+                        <div className={`font-bold ${isSelected ? 'text-primary' : 'text-foreground'}`}>
                           {formatCurrency(loan.balance, currency)}
                         </div>
                       </div>
 
-                      <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden mt-3">
+                      <div className="w-full h-1.5 bg-border rounded-full overflow-hidden mt-3">
                         <div
-                          className={`h-full rounded-full ${progress === 100 ? 'bg-emerald-500' : 'bg-indigo-500'}`}
+                          className={`h-full rounded-full ${progress === 100 ? 'bg-success' : 'bg-progress'}`}
                           style={{ width: `${progress}%` }}
                         />
                       </div>
@@ -255,7 +255,7 @@ export function EnfixLoansClient({ loans, currency }: { loans: LoanWithRepayment
         {/* Right Details */}
         <div className="flex-1">
           {selectedLoan ? (
-            <div className="bg-white rounded-4xl p-4 sm:p-6 lg:p-8 shadow-sm border border-gray-50 h-auto lg:h-150 flex flex-col">
+            <div className="bg-card rounded-3xl p-4 sm:p-6 lg:p-8 shadow-sm border border-border h-auto lg:h-150 flex flex-col">
               <div className="flex justify-between items-start mb-8">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
@@ -263,16 +263,16 @@ export function EnfixLoansClient({ loans, currency }: { loans: LoanWithRepayment
                       {getStatusIcon(selectedLoan.status)} {selectedLoan.status}
                     </span>
                     {selectedLoan.dueDate && (
-                      <span className="text-xs text-gray-500 flex items-center bg-gray-50 px-3 py-1 rounded-full">
+                      <span className="text-xs text-muted-foreground flex items-center bg-muted px-3 py-1 rounded-full">
                         <Calendar className="w-3 h-3 mr-1" /> Due {new Date(selectedLoan.dueDate).toLocaleDateString()}
                       </span>
                     )}
                   </div>
                   <div className="flex items-center gap-3">
-                    <h2 className="text-2xl font-bold text-[#1e293b]">{selectedLoan.personName}</h2>
+                    <h2 className="text-2xl font-bold text-foreground">{selectedLoan.personName}</h2>
                     <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                       <DialogTrigger render={
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-full">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:text-primary hover:bg-primary-soft rounded-full">
                           <Pencil className="h-4 w-4" />
                         </Button>
                       } />
@@ -303,30 +303,30 @@ export function EnfixLoansClient({ loans, currency }: { loans: LoanWithRepayment
                       </DialogContent>
                     </Dialog>
                   </div>
-                  {selectedLoan.notes && <p className="text-sm text-gray-400 mt-1">{selectedLoan.notes}</p>}
+                  {selectedLoan.notes && <p className="text-sm text-muted-foreground mt-1">{selectedLoan.notes}</p>}
                 </div>
 
                 <div className="text-right">
-                  <p className="text-sm text-gray-400 mb-1">Remaining Balance</p>
-                  <h3 className="text-3xl font-bold text-[#1e293b]">{formatCurrency(selectedLoan.balance, currency)}</h3>
+                  <p className="text-sm text-muted-foreground mb-1">Remaining Balance</p>
+                  <h3 className="text-3xl font-bold text-foreground">{formatCurrency(selectedLoan.balance, currency)}</h3>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4 mb-8">
-                <div className="bg-gray-50 rounded-2xl p-4">
-                  <p className="text-xs text-gray-400 mb-1">Principal Amount</p>
-                  <p className="font-bold text-[#1e293b]">{formatCurrency(selectedLoan.principalAmount, currency)}</p>
+                <div className="bg-muted rounded-2xl p-4">
+                  <p className="text-xs text-muted-foreground mb-1">Principal Amount</p>
+                  <p className="font-bold text-foreground">{formatCurrency(selectedLoan.principalAmount, currency)}</p>
                 </div>
-                <div className="bg-gray-50 rounded-2xl p-4">
-                  <p className="text-xs text-gray-400 mb-1">Interest Rate</p>
-                  <p className="font-bold text-[#1e293b]">{selectedLoan.interestRate ? `${selectedLoan.interestRate}% APR` : '0%'}</p>
+                <div className="bg-muted rounded-2xl p-4">
+                  <p className="text-xs text-muted-foreground mb-1">Interest Rate</p>
+                  <p className="font-bold text-foreground">{selectedLoan.interestRate ? `${selectedLoan.interestRate}% APR` : '0%'}</p>
                 </div>
               </div>
 
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <History className="h-4 w-4 text-indigo-500" />
-                  <h3 className="font-bold text-[#1e293b]">Activity History</h3>
+                  <History className="h-4 w-4 text-muted-foreground" />
+                  <h3 className="font-bold text-foreground">Activity History</h3>
                 </div>
                 {selectedLoan.status !== "PAID" && (
                   <Dialog>
@@ -345,35 +345,35 @@ export function EnfixLoansClient({ loans, currency }: { loans: LoanWithRepayment
                 )}
               </div>
 
-              <div className="flex-1 overflow-auto scrollbar-thin border border-gray-100 rounded-2xl">
+              <div className="flex-1 overflow-auto scrollbar-thin border border-border rounded-2xl">
                 {timeline.length === 0 ? (
-                  <div className="p-8 text-center text-sm text-gray-400">
+                  <div className="p-8 text-center text-sm text-muted-foreground">
                     No activity recorded yet.
                   </div>
                 ) : (
                   <table className="w-full text-sm">
-                    <thead className="bg-gray-50 sticky top-0">
+                    <thead className="bg-muted sticky top-0">
                       <tr>
-                        <th className="text-left py-3 px-4 text-gray-500 font-medium">Date</th>
-                        <th className="text-left py-3 px-4 text-gray-500 font-medium">Activity</th>
-                        <th className="text-right py-3 px-4 text-gray-500 font-medium">Change</th>
-                        <th className="text-right py-3 px-4 text-gray-500 font-medium">Balance After</th>
+                        <th className="text-left py-3 px-4 text-muted-foreground font-medium">Date</th>
+                        <th className="text-left py-3 px-4 text-muted-foreground font-medium">Activity</th>
+                        <th className="text-right py-3 px-4 text-muted-foreground font-medium">Change</th>
+                        <th className="text-right py-3 px-4 text-muted-foreground font-medium">Balance After</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100">
+                    <tbody className="divide-y divide-border">
                       {timeline.map((item) => (
-                        <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-                          <td className="py-3 px-4 font-medium text-[#1e293b]">
+                        <tr key={item.id} className="hover:bg-muted transition-colors">
+                          <td className="py-3 px-4 font-medium text-foreground">
                             {item.date.toLocaleDateString()}
                           </td>
                           <td className="py-3 px-4">
-                            <p className="font-medium text-[#1e293b]">{item.label}</p>
-                            {item.notes && <p className="mt-0.5 text-xs text-gray-400">{item.notes}</p>}
+                            <p className="font-medium text-foreground">{item.label}</p>
+                            {item.notes && <p className="mt-0.5 text-xs text-muted-foreground">{item.notes}</p>}
                           </td>
-                          <td className={`py-3 px-4 text-right font-bold ${item.amountDelta >= 0 ? "text-rose-600" : "text-emerald-600"}`}>
+                          <td className="py-3 px-4 text-right font-bold text-foreground">
                             {item.amountDelta >= 0 ? "+" : "-"}{formatCurrency(Math.abs(item.amountDelta), currency)}
                           </td>
-                          <td className="py-3 px-4 text-right font-medium text-gray-500">
+                          <td className="py-3 px-4 text-right font-medium text-muted-foreground">
                             {item.balanceAfter === null ? "—" : formatCurrency(item.balanceAfter, currency)}
                           </td>
                         </tr>
@@ -385,10 +385,10 @@ export function EnfixLoansClient({ loans, currency }: { loans: LoanWithRepayment
 
             </div>
           ) : (
-            <div className="bg-white rounded-4xl p-4 sm:p-6 lg:p-8 shadow-sm border border-gray-50 h-auto lg:h-150 flex flex-col items-center justify-center text-center">
+            <div className="bg-card rounded-3xl p-4 sm:p-6 lg:p-8 shadow-sm border border-border h-auto lg:h-150 flex flex-col items-center justify-center text-center">
               <Landmark className="w-16 h-16 text-gray-200 mb-4" />
-              <h3 className="text-xl font-bold text-[#1e293b]">Select a Loan</h3>
-              <p className="text-gray-400 max-w-sm mt-2">
+              <h3 className="text-xl font-bold text-foreground">Select a Loan</h3>
+              <p className="text-muted-foreground max-w-sm mt-2">
                 Click on a loan from the list to view its details and complete activity history.
               </p>
             </div>

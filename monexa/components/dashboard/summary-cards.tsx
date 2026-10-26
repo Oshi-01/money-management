@@ -45,12 +45,12 @@ export function SummaryCards({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm flex flex-col justify-between relative overflow-hidden h-[180px]">
+      <div className="bg-card border border-border rounded-xl p-5 shadow-sm flex flex-col justify-between relative overflow-hidden h-[180px]">
         <div>
-          <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Total Spendings</h3>
+          <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Total Spendings</h3>
           <div className="flex items-baseline gap-2">
-            <span className="text-xl font-mono font-medium text-gray-900">{formatCurrency(totalExpense, currency)}</span>
-            <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">-12%</span>
+            <span className="text-xl font-mono font-medium text-foreground">{formatCurrency(totalExpense, currency)}</span>
+            <span className="text-[10px] font-semibold text-income bg-income-soft px-1.5 py-0.5 rounded">-12%</span>
           </div>
         </div>
 
@@ -58,7 +58,7 @@ export function SummaryCards({
           {spendingsBreakdown.length > 0 ? (
             spendingsBreakdown.map((bar, i) => (
               <div key={i} className="flex flex-col items-center gap-1.5 w-full h-full justify-end">
-                <span className="text-[9px] text-gray-400 font-mono">{bar.percent}%</span>
+                <span className="text-[9px] text-muted-foreground font-mono">{bar.percent}%</span>
                 <div
                   className={`w-full rounded-sm ${bar.colorClass}`}
                   style={{ height: `${Math.max(bar.percent, 2)}%` }}
@@ -66,17 +66,17 @@ export function SummaryCards({
               </div>
             ))
           ) : (
-            <div className="w-full text-center text-xs text-gray-400 pb-2">No expenses yet</div>
+            <div className="w-full text-center text-xs text-muted-foreground pb-2">No expenses yet</div>
           )}
         </div>
       </div>
 
-      <div className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm flex flex-col justify-between relative overflow-hidden h-[180px]">
+      <div className="bg-card border border-border rounded-xl p-5 shadow-sm flex flex-col justify-between relative overflow-hidden h-[180px]">
         <div>
-          <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Savings</h3>
+          <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Savings</h3>
           <div className="flex items-baseline gap-2">
-            <span className="text-xl font-mono font-medium text-gray-900">{formatCurrency(balance, currency)}</span>
-            <span className="text-[10px] font-semibold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded">-2%</span>
+            <span className="text-xl font-mono font-medium text-foreground">{formatCurrency(balance, currency)}</span>
+            <span className="text-[10px] font-semibold text-expense bg-expense-soft px-1.5 py-0.5 rounded">-2%</span>
           </div>
         </div>
 
@@ -84,16 +84,16 @@ export function SummaryCards({
           <svg className="w-full h-12 overflow-visible" viewBox="0 0 100 40" preserveAspectRatio="none">
             <defs>
               <linearGradient id="savingsGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#ef4444" stopOpacity="0.2" />
-                <stop offset="100%" stopColor="#ef4444" stopOpacity="0" />
+                <stop offset="0%" stopColor="var(--chart-expense)" stopOpacity="0.2" />
+                <stop offset="100%" stopColor="var(--chart-expense)" stopOpacity="0" />
               </linearGradient>
             </defs>
             {savingsTrend.length > 0 && (
               <path d={`${pathD} L100,40 L0,40 Z`} fill="url(#savingsGrad)" />
             )}
-            <path d={pathD} fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <path d={pathD} fill="none" stroke="var(--chart-expense)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          <div className="flex justify-between text-[9px] text-gray-400 font-mono mt-2 w-full">
+          <div className="flex justify-between text-[9px] text-muted-foreground font-mono mt-2 w-full">
             {savingsTrend.length > 0
               ? savingsTrend.map((t, i) => <span key={i}>{t.month}</span>)
               : <><span>JAN</span><span>FEB</span><span>MAR</span><span>APR</span><span>MAY</span><span>JUN</span></>

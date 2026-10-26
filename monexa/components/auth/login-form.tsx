@@ -73,7 +73,7 @@ export function LoginForm() {
           action={
             <Link
               href="/forgot-password"
-              className="text-xs font-medium text-emerald-700 hover:underline dark:text-emerald-400"
+              className="text-xs font-medium text-primary hover:underline"
             >
               Forgot password?
             </Link>

@@ -74,14 +74,14 @@ function Field({
   return (
     <div className="space-y-2">
       <div className="flex items-baseline justify-between gap-3">
-        <label htmlFor={htmlFor} className="text-sm font-semibold text-[#1e293b]">
+        <label htmlFor={htmlFor} className="text-sm font-semibold text-foreground">
           {label}
         </label>
-        {hint && <span className="text-xs text-gray-400">{hint}</span>}
+        {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
       </div>
       {children}
       {error && (
-        <p role="alert" className="text-xs font-medium text-rose-600">
+        <p role="alert" className="text-xs font-medium text-destructive">
           {error}
         </p>
       )}
@@ -92,13 +92,11 @@ function Field({
 /** A pill-shaped choice, used for categories, accounts and quick dates. */
 function Chip({
   active,
-  tone = "emerald",
   onClick,
   title,
   children,
 }: {
   active: boolean;
-  tone?: "emerald" | "rose";
   onClick: () => void;
   title?: string;
   children: React.ReactNode;
@@ -111,12 +109,10 @@ function Chip({
       title={title}
       onClick={onClick}
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-semibold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500/50",
+        "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-semibold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary/50",
         active
-          ? tone === "rose"
-            ? "border-rose-500/50 bg-rose-50 text-rose-700"
-            : "border-emerald-500/50 bg-emerald-50 text-emerald-700"
-          : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50",
+          ? "border-primary/50 bg-primary-soft text-primary"
+          : "border-border bg-card text-secondary-foreground hover:bg-muted",
       )}
     >
       {children}
@@ -212,7 +208,7 @@ export function TransactionForm({
         : await createTransaction(formData);
       if (result.error) {
         toast.error(result.error);
-      } else if (result.success) {
+      } else if ("success" in result && result.success) {
         toast.success(result.success);
         if (!isEdit) reset();
         onSuccess?.();
@@ -225,7 +221,7 @@ export function TransactionForm({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
       {/* Type */}
-      <div role="radiogroup" aria-label="Transaction type" className="grid grid-cols-2 gap-1 rounded-2xl bg-gray-100 p-1">
+      <div role="radiogroup" aria-label="Transaction type" className="grid grid-cols-2 gap-1 rounded-2xl bg-muted p-1">
         {(["EXPENSE", "INCOME"] as const).map((t) => {
           const active = type === t;
           return (
@@ -240,10 +236,10 @@ export function TransactionForm({
                 setValue("categoryId", ""); // categories differ per type
               }}
               className={cn(
-                "flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold outline-none transition-all focus-visible:ring-2 focus-visible:ring-emerald-500/50",
+                "flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold outline-none transition-all focus-visible:ring-2 focus-visible:ring-primary/50",
                 active
-                  ? cn("bg-white shadow-sm", t === "EXPENSE" ? "text-rose-600" : "text-emerald-600")
-                  : "text-gray-500 hover:text-gray-700",
+                  ? cn("bg-card shadow-sm", t === "EXPENSE" ? "text-expense" : "text-income")
+                  : "text-muted-foreground hover:text-secondary-foreground",
               )}
             >
               {t === "EXPENSE" ? <ArrowDownRight className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
@@ -254,12 +250,12 @@ export function TransactionForm({
       </div>
 
       {/* Amount */}
-      <div className="rounded-3xl bg-gray-50 px-4 py-5 text-center">
-        <label htmlFor="amount" className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+      <div className="rounded-3xl bg-muted px-4 py-5 text-center">
+        <label htmlFor="amount" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Amount
         </label>
         <div className="mt-1 flex items-center justify-center gap-1.5">
-          <span className={cn("text-3xl font-bold", isExpense ? "text-rose-600" : "text-emerald-600")}>
+          <span className={cn("text-3xl font-bold", isExpense ? "text-expense" : "text-income")}>
             {getCurrencySymbol(currency)}
           </span>
           <input
@@ -271,12 +267,12 @@ export function TransactionForm({
             placeholder="0.00"
             autoFocus={!isEdit}
             aria-invalid={!!errors.amount}
-            className="w-44 bg-transparent text-center text-4xl font-bold tabular-nums text-[#1e293b] outline-none placeholder:text-gray-300 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            className="w-44 bg-transparent text-center text-4xl font-bold tabular-nums text-foreground outline-none placeholder:text-muted-foreground [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
             {...register("amount", { valueAsNumber: true })}
           />
         </div>
         {errors.amount && (
-          <p role="alert" className="mt-1 text-xs font-medium text-rose-600">
+          <p role="alert" className="mt-1 text-xs font-medium text-destructive">
             {errors.amount.message}
           </p>
         )}
@@ -295,7 +291,7 @@ export function TransactionForm({
       {/* Category */}
       <Field label="Category" error={errors.categoryId?.message}>
         {visibleCategories.length === 0 ? (
-          <p className="rounded-2xl bg-amber-50 p-3 text-sm text-amber-700">
+          <p className="rounded-2xl bg-warning-soft p-3 text-sm text-warning">
             You have no {isExpense ? "expense" : "income"} categories yet.{" "}
             <Link href="/dashboard/categories" className="font-semibold underline">
               Create one
@@ -310,7 +306,6 @@ export function TransactionForm({
                 <Chip
                   key={cat.id}
                   active={categoryId === cat.id}
-                  tone={isExpense ? "rose" : "emerald"}
                   onClick={() => setValue("categoryId", cat.id, { shouldValidate: true })}
                   title={b ? `Has a ${formatCurrency(b.amount, currency)} budget this month` : undefined}
                 >
@@ -323,24 +318,24 @@ export function TransactionForm({
         )}
 
         {budget && (
-          <div className="mt-3 rounded-2xl bg-gray-50 p-3.5">
+          <div className="mt-3 rounded-2xl bg-muted p-3.5">
             <div className="flex items-center justify-between gap-3 text-xs">
-              <span className="font-semibold text-gray-600">
+              <span className="font-semibold text-secondary-foreground">
                 {budget.category?.name ?? "Category"} budget
               </span>
-              <span className={cn("font-bold tabular-nums", budgetLeft < 0 ? "text-rose-600" : "text-emerald-600")}>
+              <span className={cn("font-bold tabular-nums", budgetLeft < 0 ? "text-warning" : "text-foreground")}>
                 {budgetLeft < 0
                   ? `${formatCurrency(-budgetLeft, currency)} over`
                   : `${formatCurrency(budgetLeft, currency)} left`}
               </span>
             </div>
-            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-gray-200">
+            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-border">
               <div
-                className={cn("h-full rounded-full transition-all", budgetLeft < 0 ? "bg-rose-500" : "bg-emerald-500")}
+                className={cn("h-full rounded-full transition-all", budgetLeft < 0 ? "bg-warning" : "bg-progress")}
                 style={{ width: `${budgetPct}%` }}
               />
             </div>
-            <p className="mt-2 text-xs text-gray-400">
+            <p className="mt-2 text-xs text-muted-foreground">
               {isEdit
                 ? `${formatCurrency(spent, currency)} of ${formatCurrency(budget.amount, currency)} spent this month`
                 : validAmount
@@ -364,7 +359,7 @@ export function TransactionForm({
               </Chip>
             ))}
           </div>
-          {accountId && <p className="text-xs text-gray-400">The account balance updates automatically.</p>}
+          {accountId && <p className="text-xs text-muted-foreground">The account balance updates automatically.</p>}
         </Field>
       )}
 
@@ -390,8 +385,8 @@ export function TransactionForm({
         type="submit"
         disabled={isPending}
         className={cn(
-          "h-12 w-full rounded-full text-base font-bold text-white",
-          isExpense ? "bg-rose-600 hover:bg-rose-700" : "bg-emerald-600 hover:bg-emerald-700",
+          "h-12 w-full rounded-full text-base font-bold text-primary-foreground",
+          "bg-primary hover:bg-primary-hover",
         )}
       >
         {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

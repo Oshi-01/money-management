@@ -50,18 +50,18 @@ export function NewTransactionDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
-        render={<Button className="h-11 w-full rounded-full bg-[#1e293b] px-6 text-white hover:bg-[#1e293b]/90 sm:w-auto" />}
+        render={<Button className="h-11 w-full rounded-lg bg-primary px-5 text-primary-foreground hover:bg-primary-hover sm:w-auto" />}
       >
         <Plus className="mr-2 h-4 w-4" /> Add Transaction
       </DialogTrigger>
       <DialogContent className="max-h-[92vh] overflow-y-auto rounded-3xl p-5 sm:max-w-lg sm:p-6">
         <DialogHeader className="flex-row items-center gap-3 pr-8">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-muted text-secondary-foreground">
             <ArrowLeftRight className="h-5 w-5" />
           </div>
           <div className="space-y-0.5">
-            <DialogTitle className="text-lg font-bold text-[#1e293b]">New transaction</DialogTitle>
-            <DialogDescription className="text-sm text-gray-400">
+            <DialogTitle className="text-lg font-bold text-foreground">New transaction</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
               Record money coming in or going out.
             </DialogDescription>
           </div>

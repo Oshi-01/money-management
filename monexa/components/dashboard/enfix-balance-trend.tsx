@@ -1,99 +1,38 @@
 "use client";
 
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { useSyncExternalStore } from "react";
+import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { formatCurrency } from "@/lib/utils";
-import { ArrowUpRight } from "lucide-react";
-import { useState, useEffect } from "react";
 
+const subscribe = () => () => {};
 interface EnfixBalanceTrendProps {
-  balance: number;
   currency: string;
   savingsTrend: { month: string; net: number }[];
-  trends: {
-    balanceChange: number;
-  };
+  trends: { balanceChange: number };
 }
 
-export function EnfixBalanceTrend({ balance, currency, savingsTrend, trends }: EnfixBalanceTrendProps) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) return <div className="h-[300px]" />;
-
+export function EnfixBalanceTrend({ currency, savingsTrend, trends }: EnfixBalanceTrendProps) {
+  const mounted = useSyncExternalStore(subscribe, () => true, () => false);
   return (
-    <div className="flex flex-col h-full w-full">
-      <div className="flex justify-between items-start mb-6">
-        <div>
-          <h2 className="text-[#1e293b] font-bold text-lg mb-1">Balance Trends</h2>
-          <p className="text-3xl font-bold text-emerald-600">
-            {formatCurrency(balance, currency).replace(/\.00$/, '')}
-          </p>
-        </div>
-        <div className="flex items-center text-sm text-gray-500 font-medium">
-          Last Month
-          {trends.balanceChange >= 0 ? (
-            <ArrowUpRight className="h-4 w-4 ml-1 text-emerald-500" />
-          ) : (
-            <ArrowUpRight className="h-4 w-4 ml-1 text-rose-500 transform rotate-90" />
-          )}
-          <span className={`${trends.balanceChange >= 0 ? 'text-emerald-500' : 'text-rose-500'} font-bold ml-1`}>
-            {Math.abs(trends.balanceChange).toFixed(2)}%
-          </span>
-        </div>
+    <section className="h-full app-panel p-5 sm:p-6">
+      <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+        <div><h2 className="text-lg font-semibold tracking-tight text-foreground">Money over time</h2><p className="mt-1 text-xs leading-relaxed text-muted-foreground">Monthly net cash flow, including selected loans.</p></div>
+        <p className="text-right text-xs text-muted-foreground"><span className={`block text-sm font-semibold tabular-nums ${trends.balanceChange >= 0 ? "text-income" : "text-expense"}`}>{trends.balanceChange >= 0 ? "+" : "−"}{Math.abs(trends.balanceChange).toFixed(1)}%</span>vs last month</p>
       </div>
-
-      <div className="flex-1 w-full relative min-h-[220px]">
-        {savingsTrend.length === 0 ? (
-          <div className="flex h-full items-center justify-center text-sm text-gray-400">
-            No data available for trends.
-          </div>
-        ) : (
+      <div className="h-64 w-full sm:h-72" role="img" aria-label="Net cash flow for the last six months">
+        {!mounted ? null : savingsTrend.length === 0 ? <p className="flex h-full items-center justify-center text-sm text-muted-foreground">Your monthly cash flow will appear here.</p> : (
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={savingsTrend} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
-              <defs>
-                <linearGradient id="colorBalance" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
-                  <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <XAxis
-                dataKey="month"
-                axisLine={{ stroke: '#cbd5e1' }}
-                tickLine={false}
-                tick={{ fontSize: 11, fill: "#64748b" }}
-                dy={10}
-              />
-              <YAxis
-                axisLine={false}
-                tickLine={false}
-                tick={{ fontSize: 11, fill: "#64748b" }}
-                tickFormatter={(val) => {
-                  if (val === 0) return "0";
-                  return (val / 1000).toFixed(0) + "k";
-                }}
-              />
-              <Tooltip
-                contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }}
-                itemStyle={{ fontSize: "14px", fontWeight: 500 }}
-                labelStyle={{ color: "#888888", marginBottom: "4px" }}
-                formatter={(value: any) => [formatCurrency(Number(value || 0), currency)]}
-              />
-              <Area
-                type="monotone"
-                dataKey="net"
-                stroke="#10b981"
-                strokeWidth={3}
-                fillOpacity={1}
-                fill="url(#colorBalance)"
-                activeDot={{ r: 6, strokeWidth: 0, fill: "#10b981" }}
-              />
-            </AreaChart>
+            <LineChart data={savingsTrend} margin={{ top: 12, right: 12, left: -12, bottom: 4 }}>
+              <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="3 5" />
+              <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} dy={8} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} tickFormatter={value => Math.abs(value) >= 1000 ? `${value / 1000}k` : String(value)} />
+              <ReferenceLine y={0} stroke="var(--border)" />
+              <Tooltip contentStyle={{ borderRadius: 8, background: "var(--card)", border: "1px solid var(--border)", fontSize: 12 }} formatter={value => [formatCurrency(Number(value ?? 0), currency), "Net cash flow"]} />
+              <Line type="monotone" dataKey="net" name="Net cash flow" stroke="var(--chart-balance)" strokeWidth={2.5} dot={false} activeDot={{ r: 5 }} isAnimationActive={false} />
+            </LineChart>
           </ResponsiveContainer>
         )}
       </div>
-    </div>
+    </section>
   );
 }

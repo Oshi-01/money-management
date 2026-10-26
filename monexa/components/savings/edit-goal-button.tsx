@@ -16,7 +16,7 @@ export function EditGoalButton({ goal }: { goal: EditableGoal }) {
         size="icon"
         aria-label={`Edit ${goal.title}`}
         onClick={() => setOpen(true)}
-        className="h-8 w-8 rounded-full border-gray-200 text-gray-500 hover:bg-emerald-50 hover:text-emerald-600"
+        className="h-8 w-8 rounded-full border-border text-muted-foreground hover:bg-primary-soft hover:text-primary"
       >
         <Pencil className="h-4 w-4" />
       </Button>

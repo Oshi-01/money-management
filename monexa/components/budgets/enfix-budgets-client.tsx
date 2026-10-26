@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { formatCurrency } from "@/lib/utils";
-import { Carrot, Target, Wallet, Download, Plus, AlertCircle, ShoppingBag, Car, GraduationCap, DollarSign, Shirt, Pencil, Trash2 } from "lucide-react";
+import { Carrot, Target, Wallet, Plus, AlertCircle, ShoppingBag, Car, GraduationCap, DollarSign, Shirt, Pencil, Trash2 } from "lucide-react";
 import { BarChart, Bar, XAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { BudgetForm } from "@/components/budgets/budget-form";
@@ -85,15 +85,15 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
   if (!selectedBudget) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] space-y-4">
-        <div className="bg-white p-6 rounded-2xl shadow-sm text-center">
-          <Target className="w-12 h-12 text-emerald-500 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-gray-900 mb-2">No Budgets Yet</h2>
-          <p className="text-gray-500 mb-6 max-w-sm">
+        <div className="bg-card p-6 rounded-2xl shadow-sm text-center">
+          <Target className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-foreground mb-2">No Budgets Yet</h2>
+          <p className="text-muted-foreground mb-6 max-w-sm">
             You haven&apos;t set up any budgets for this month. Start by adding a new budget limit for your categories.
           </p>
           <Dialog>
             <DialogTrigger render={
-              <Button className="bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl px-6">
+              <Button className="bg-primary hover:bg-primary text-primary-foreground rounded-xl px-6">
                 <Plus className="mr-2 h-4 w-4" /> Add New Budget
               </Button>
             } />
@@ -165,11 +165,11 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 animate-in fade-in duration-500">
+    <div className="flex flex-col lg:flex-row gap-6 ">
 
       {/* Left Sidebar: Budget List */}
       <div className="w-full lg:w-80 shrink-0 space-y-4">
-        <h2 className="text-[#1e293b] font-bold text-lg px-2">Budgets List</h2>
+        <h2 className="text-foreground font-bold text-lg px-2">Budgets List</h2>
 
         <div className="space-y-4">
           {budgets.map(b => {
@@ -181,19 +181,23 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
               <div
                 key={b.id}
                 onClick={() => setSelectedId(b.id)}
+                role="button"
+                tabIndex={0}
+                aria-pressed={isActive}
+                onKeyDown={event => { if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); setSelectedId(b.id); } }}
                 className={`cursor-pointer rounded-2xl p-5 transition-all ${isActive
-                    ? 'bg-emerald-600 shadow-md text-white'
-                    : 'bg-white hover:bg-gray-50 text-gray-900 border border-transparent hover:border-emerald-100'
+                    ? 'border border-primary bg-primary-soft text-foreground'
+                    : 'border border-border bg-card text-foreground hover:bg-muted'
                   }`}
               >
                 <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2.5 rounded-xl ${isActive ? 'bg-white/20' : 'bg-emerald-100/50 text-emerald-600'}`}>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className={`p-2.5 rounded-xl ${isActive ? 'bg-card text-primary' : 'bg-muted text-secondary-foreground'}`}>
                       <BIcon className="w-5 h-5" />
                     </div>
                     <div>
                       <h3 className="font-bold">{b.category.name}</h3>
-                      <p className={`text-xs ${isActive ? 'text-white/80' : 'text-gray-400'}`}>
+                      <p className={`text-xs ${isActive ? 'text-secondary-foreground' : 'text-muted-foreground'}`}>
                         {formatCurrency(b.amount, currency)}
                       </p>
                     </div>
@@ -207,7 +211,7 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
                         setSelectedId(b.id);
                         setEditing(true);
                       }}
-                      className={`rounded-full p-1.5 transition-colors ${isActive ? "text-white/80 hover:bg-white/20 hover:text-white" : "text-gray-400 hover:bg-emerald-50 hover:text-emerald-600"}`}
+                      className={`rounded-full p-1.5 transition-colors ${isActive ? "text-primary hover:bg-card" : "text-muted-foreground hover:bg-primary-soft hover:text-primary"}`}
                     >
                       <Pencil className="h-3.5 w-3.5" />
                     </button>
@@ -219,7 +223,7 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
                         setSelectedId(b.id);
                         setDeleting(true);
                       }}
-                      className={`rounded-full p-1.5 transition-colors ${isActive ? "text-white/80 hover:bg-white/20 hover:text-white" : "text-gray-400 hover:bg-rose-50 hover:text-rose-600"}`}
+                      className={`rounded-full p-1.5 transition-colors ${"text-muted-foreground hover:bg-danger-soft hover:text-destructive"}`}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
@@ -228,15 +232,15 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
 
                 <div className="flex items-end justify-between mb-2">
                   <span className="font-bold text-sm">{formatCurrency(b.spentAmount, currency)}</span>
-                  <span className={`text-xs ${isActive ? 'text-white/80' : 'text-gray-500'}`}>
+                  <span className={`text-xs ${isActive ? 'text-secondary-foreground' : 'text-muted-foreground'}`}>
                     {formatCurrency(b.amount, currency)}
                   </span>
                 </div>
 
-                <div className={`w-full h-1.5 rounded-full mb-2 ${isActive ? 'bg-white/30' : 'bg-gray-100'}`}>
+                <div className={`w-full h-1.5 rounded-full mb-2 ${isActive ? 'bg-card' : 'bg-muted'}`}>
                   <div
                     className={`h-full rounded-full ${
-                      isActive ? 'bg-white' : b.isOverBudget ? 'bg-rose-500' : 'bg-emerald-500'
+                      b.isOverBudget ? 'bg-warning' : 'bg-progress'
                     }`}
                     style={{ width: `${bPercent}%` }}
                   />
@@ -244,7 +248,7 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
 
                 <div className="flex justify-between items-center text-[10px] font-medium">
                   <span>{bPercent}%</span>
-                  <span className={`flex items-center gap-1 ${b.isOverBudget ? (isActive ? 'text-white' : 'text-rose-500') : ''}`}>
+                  <span className={`flex items-center gap-1 ${b.isOverBudget ? 'text-warning' : 'text-muted-foreground'}`}>
                     {b.isOverBudget && <AlertCircle className="w-3 h-3" />}
                     {b.isOverBudget ? 'Over budget' : 'On track'}
                   </span>
@@ -258,10 +262,10 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
           <DialogTrigger render={
             <button
               type="button"
-              className="flex w-full cursor-pointer items-center justify-between rounded-2xl border border-dashed border-gray-200 bg-white p-5 text-left font-bold text-gray-700 transition-colors hover:bg-emerald-50"
+              className="flex w-full cursor-pointer items-center justify-between rounded-2xl border border-dashed border-border bg-card p-5 text-left font-bold text-secondary-foreground transition-colors hover:bg-primary-soft"
             >
               <span>Add new budget</span>
-              <Plus className="w-5 h-5 text-emerald-500" />
+              <Plus className="w-5 h-5 text-primary" />
             </button>
           } />
           <DialogContent className="sm:max-w-md">
@@ -274,19 +278,19 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
       </div>
 
       {/* Right Content: Budget Details */}
-      <div className="flex-1 space-y-6">
+      <div className="min-w-0 flex-1 space-y-6">
 
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold text-[#1e293b]">{selectedBudget.category.name}</h1>
+              <h1 className="text-2xl font-bold text-foreground">{selectedBudget.category.name}</h1>
               <Button
                 variant="ghost"
                 size="icon"
                 aria-label={`Edit ${selectedBudget.category.name} budget`}
                 onClick={() => setEditing(true)}
-                className="h-8 w-8 rounded-full text-gray-400 hover:bg-emerald-50 hover:text-emerald-600"
+                className="h-8 w-8 rounded-full text-muted-foreground hover:bg-primary-soft hover:text-primary"
               >
                 <Pencil className="h-4 w-4" />
               </Button>
@@ -295,26 +299,23 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
                 size="icon"
                 aria-label={`Delete ${selectedBudget.category.name} budget`}
                 onClick={() => setDeleting(true)}
-                className="h-8 w-8 rounded-full text-gray-400 hover:bg-rose-50 hover:text-rose-600"
+                className="h-8 w-8 rounded-full text-muted-foreground hover:bg-danger-soft hover:text-destructive"
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>
-            <p className="text-sm text-gray-400">Budget overview and analysis</p>
+            <p className="text-sm text-muted-foreground">Budget overview and analysis</p>
           </div>
-          <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2 px-4 py-2 bg-white rounded-full text-sm font-bold text-gray-700 shadow-sm border border-gray-100 hover:bg-gray-50">
-              <Download className="w-4 h-4" /> Export
-            </button>
-            <div className="flex items-center gap-1 bg-white p-1 rounded-full shadow-sm border border-gray-100">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-1 bg-card p-1 rounded-full shadow-sm border border-border">
               {(["WEEKLY", "MONTHLY", "YEARLY"] as BudgetPeriod[]).map((period) => (
                 <button
                   key={period}
                   onClick={() => setActivePeriod(period)}
-                  className={`px-4 py-1.5 text-sm font-bold rounded-full transition-colors ${
+                  className={`px-3 py-1.5 text-sm font-medium rounded-full transition-colors ${
                     activePeriod === period
-                      ? "text-white bg-emerald-600"
-                      : "text-gray-500 hover:bg-gray-50"
+                      ? "text-primary-foreground bg-primary"
+                      : "text-muted-foreground hover:bg-muted"
                   }`}
                 >
                   {period.charAt(0) + period.slice(1).toLowerCase()}
@@ -326,7 +327,7 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
 
         {/* Over-budget warning */}
         {periodView.isOverBudget && (
-          <div className="flex items-center gap-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl px-5 py-4">
+          <div className="flex items-center gap-3 bg-warning-soft border border-warning-border text-warning rounded-2xl px-5 py-4">
             <AlertCircle className="w-5 h-5 shrink-0" />
             <p className="text-sm font-medium">
               You&apos;ve gone {formatCurrency(periodView.spent - periodView.totalBudget, currency)} over your{" "}
@@ -337,55 +338,55 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
 
         {/* 3 Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-50 flex items-center justify-between">
+          <div className="bg-card rounded-2xl p-5 shadow-sm border border-border flex items-center justify-between">
             <div>
-              <p className="text-xs text-gray-400 font-medium mb-1">Total Budget</p>
-              <h3 className="text-xl font-bold text-[#1e293b]">{formatCurrency(periodView.totalBudget, currency)}</h3>
+              <p className="text-xs text-muted-foreground font-medium mb-1">Total Budget</p>
+              <h3 className="text-xl font-bold text-foreground">{formatCurrency(periodView.totalBudget, currency)}</h3>
             </div>
-            <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-muted text-secondary-foreground flex items-center justify-center">
               <DollarSign className="w-4 h-4" />
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-50 flex items-center justify-between">
+          <div className="bg-card rounded-2xl p-5 shadow-sm border border-border flex items-center justify-between">
             <div>
-              <p className="text-xs text-gray-400 font-medium mb-1">Spent</p>
-              <h3 className="text-xl font-bold text-[#1e293b]">{formatCurrency(periodView.spent, currency)}</h3>
+              <p className="text-xs text-muted-foreground font-medium mb-1">Spent</p>
+              <h3 className="text-xl font-bold text-foreground">{formatCurrency(periodView.spent, currency)}</h3>
             </div>
-            <div className="w-8 h-8 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-warning-soft text-warning flex items-center justify-center">
               <DollarSign className="w-4 h-4" />
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-50 flex items-center justify-between">
+          <div className="bg-card rounded-2xl p-5 shadow-sm border border-border flex items-center justify-between">
             <div>
-              <p className="text-xs text-gray-400 font-medium mb-1">Remaining</p>
-              <h3 className="text-xl font-bold text-[#1e293b]">{formatCurrency(remaining, currency)}</h3>
+              <p className="text-xs text-muted-foreground font-medium mb-1">Remaining</p>
+              <h3 className="text-xl font-bold text-foreground">{formatCurrency(remaining, currency)}</h3>
             </div>
-            <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-muted text-muted-foreground flex items-center justify-center">
               <DollarSign className="w-4 h-4" />
             </div>
           </div>
         </div>
 
         {/* Budget Utilization */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-50">
-          <h3 className="text-lg font-bold text-[#1e293b] mb-6">Budget Utilization</h3>
-          <div className="flex justify-between text-sm font-bold text-gray-400 mb-2">
+        <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
+          <h3 className="text-lg font-bold text-foreground mb-6">Budget Utilization</h3>
+          <div className="flex justify-between text-sm font-bold text-muted-foreground mb-2">
             <span>{formatCurrency(periodView.spent, currency)} spent</span>
             <span>{formatCurrency(periodView.totalBudget, currency)} total</span>
           </div>
-          <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden mb-2">
+          <div className="w-full h-2.5 bg-muted rounded-full overflow-hidden mb-2">
             <div
-              className={`h-full rounded-full ${periodView.isOverBudget ? 'bg-rose-500' : 'bg-amber-500'}`}
+              className={`h-full rounded-full ${periodView.isOverBudget ? 'bg-warning' : 'bg-progress'}`}
               style={{ width: `${percent}%` }}
             />
           </div>
           <div className="flex justify-between text-xs font-bold mt-2">
-            <span className={periodView.isOverBudget ? 'text-rose-500' : 'text-amber-500'}>
+            <span className={periodView.isOverBudget ? 'text-warning' : 'text-muted-foreground'}>
               {percent}% of budget used
             </span>
-            <span className="text-gray-400">
+            <span className="text-muted-foreground">
               {periodView.isOverBudget ? '0 remaining' : `${formatCurrency(remaining, currency)} remaining`}
             </span>
           </div>
@@ -395,8 +396,8 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
 
           {/* Budget Period Stacked Bar Chart */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-50 flex flex-col">
-            <h3 className="text-lg font-bold text-[#1e293b] mb-6">Budget Period</h3>
+          <div className="bg-card rounded-2xl p-6 shadow-sm border border-border flex flex-col">
+            <h3 className="text-lg font-bold text-foreground mb-6">Budget Period</h3>
             <div className="flex-1 min-h-[200px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
@@ -404,7 +405,7 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
                     dataKey="month"
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fontSize: 12, fill: '#94a3b8' }}
+                    tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
                     dy={10}
                   />
                   <Tooltip
@@ -412,58 +413,58 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                   />
                   {/* Spent Layer */}
-                  <Bar dataKey="spent" stackId="a" fill="#10b981" radius={[0, 0, 4, 4]} barSize={24} />
+                  <Bar dataKey="spent" stackId="a" fill="var(--chart-income)" radius={[0, 0, 4, 4]} barSize={24} />
                   {/* Remaining Layer */}
-                  <Bar dataKey="remaining" stackId="a" fill="#34d399" radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="remaining" stackId="a" fill="var(--primary-border)" radius={[0, 0, 0, 0]} />
                   {/* Overbudget Layer (if any) to make it stand out or add height */}
-                  <Bar dataKey="over" stackId="a" fill="#a7f3d0" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="over" stackId="a" fill="var(--warning-border)" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
 
           {/* Comparative Analysis */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-50">
-            <h3 className="text-lg font-bold text-[#1e293b] mb-6">Comparative Analysis</h3>
+          <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
+            <h3 className="text-lg font-bold text-foreground mb-6">Comparative Analysis</h3>
 
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-full bg-muted text-secondary-foreground flex items-center justify-center">
                     <Wallet className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-gray-700 text-sm">{periodLabels.previous}</h4>
-                    <p className="text-xs text-gray-400">{periodLabels.previousSub}</p>
+                    <h4 className="font-bold text-secondary-foreground text-sm">{periodLabels.previous}</h4>
+                    <p className="text-xs text-muted-foreground">{periodLabels.previousSub}</p>
                   </div>
                 </div>
-                <span className="font-bold text-gray-700">{formatCurrency(periodView.lastPeriodSpent, currency)}</span>
+                <span className="font-bold text-secondary-foreground">{formatCurrency(periodView.lastPeriodSpent, currency)}</span>
               </div>
 
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-full bg-muted text-secondary-foreground flex items-center justify-center">
                     <Wallet className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-gray-700 text-sm">{periodLabels.current}</h4>
-                    <p className="text-xs text-gray-400">{periodLabels.currentSub}</p>
+                    <h4 className="font-bold text-secondary-foreground text-sm">{periodLabels.current}</h4>
+                    <p className="text-xs text-muted-foreground">{periodLabels.currentSub}</p>
                   </div>
                 </div>
-                <span className="font-bold text-gray-700">{formatCurrency(periodView.spent, currency)}</span>
+                <span className="font-bold text-secondary-foreground">{formatCurrency(periodView.spent, currency)}</span>
               </div>
 
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-full bg-muted text-secondary-foreground flex items-center justify-center">
                     <DollarSign className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-gray-700 text-sm">Variance</h4>
-                    <p className="text-xs text-gray-400">Difference from previous</p>
+                    <h4 className="font-bold text-secondary-foreground text-sm">Variance</h4>
+                    <p className="text-xs text-muted-foreground">Difference from previous</p>
                   </div>
                 </div>
-                <span className={`font-bold ${isVariancePositive ? 'text-rose-500' : 'text-emerald-500'}`}>
+                <span className={`font-bold ${isVariancePositive ? 'text-expense' : 'text-income'}`}>
                   {isVariancePositive ? '+' : ''}{formatCurrency(variance, currency)}
                 </span>
               </div>

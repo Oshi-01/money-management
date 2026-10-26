@@ -24,13 +24,10 @@ export default async function ProfilePage() {
     <div className="space-y-6 pb-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-[#1e293b]">Profile</h2>
-          <p className="text-sm text-gray-400">
+          <h2 className="page-title">Profile</h2>
+          <p className="page-description">
             Manage your profile and accounts.
           </p>
-        </div>
-        <div className="text-sm text-gray-400 font-medium flex items-center">
-          Home <span className="mx-2">&gt;</span> <span className="text-emerald-600">Profile</span>
         </div>
       </div>
 

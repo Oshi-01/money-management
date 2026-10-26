@@ -24,7 +24,7 @@ export function DashboardChart({ data, currency }: DashboardChartProps) {
 
   if (!mounted) {
     return (
-      <Card className="h-full border border-gray-100 shadow-sm flex flex-col rounded-xl overflow-hidden bg-white">
+      <Card className="h-full border border-border shadow-sm flex flex-col rounded-xl overflow-hidden bg-card">
         <div className="flex items-center justify-center h-100">Loading...</div>
       </Card>
     );
@@ -45,25 +45,25 @@ export function DashboardChart({ data, currency }: DashboardChartProps) {
   const avgExpense = data.length > 0 ? totalExpense / data.length : 0;
 
   return (
-    <Card className="h-full border border-gray-100 shadow-sm flex flex-col rounded-xl overflow-hidden bg-white relative">
+    <Card className="h-full border border-border shadow-sm flex flex-col rounded-xl overflow-hidden bg-card relative">
       <CardHeader className="flex flex-row items-start justify-between pb-6">
         <div>
-          <CardTitle className="text-xl font-mono font-medium text-gray-900 flex items-center gap-2">
-            {formatCurrency(totalExpense, currency)} <span className="text-sm font-sans text-gray-500 font-normal">Spent</span>
+          <CardTitle className="text-xl font-mono font-medium text-foreground flex items-center gap-2">
+            {formatCurrency(totalExpense, currency)} <span className="text-sm font-sans text-muted-foreground font-normal">Spent</span>
           </CardTitle>
         </div>
-        <div className="flex gap-4 text-xs font-semibold text-gray-400">
-          <span className="hover:text-teal-600 cursor-pointer transition-colors">Day</span>
-          <span className="hover:text-teal-600 cursor-pointer transition-colors">Week</span>
-          <span className="text-teal-600 border-b border-teal-600 pb-1 cursor-pointer">Month</span>
-          <span className="hover:text-teal-600 cursor-pointer transition-colors">Year</span>
+        <div className="flex gap-4 text-xs font-semibold text-muted-foreground">
+          <span className="hover:text-primary cursor-pointer transition-colors">Day</span>
+          <span className="hover:text-primary cursor-pointer transition-colors">Week</span>
+          <span className="text-primary border-b border-teal-600 pb-1 cursor-pointer">Month</span>
+          <span className="hover:text-primary cursor-pointer transition-colors">Year</span>
         </div>
       </CardHeader>
 
       <CardContent className="flex-1 pb-6 pl-0 sm:pl-6 pt-2 relative">
         {isDataEmpty && (
-          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/60 backdrop-blur-[1px]">
-            <p className="text-sm text-gray-400 font-medium bg-white px-4 py-2 rounded-full shadow-sm border border-gray-100">
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-card/60 backdrop-blur-[1px]">
+            <p className="text-sm text-muted-foreground font-medium bg-card px-4 py-2 rounded-full shadow-sm border border-border">
               No data available for the last 30 days.
             </p>
           </div>
@@ -76,44 +76,44 @@ export function DashboardChart({ data, currency }: DashboardChartProps) {
                 dataKey="displayDate"
                 axisLine={false}
                 tickLine={false}
-                tick={{ fontSize: 10, fill: "#9ca3af", fontFamily: "monospace" }}
+                tick={{ fontSize: 10, fill: "var(--muted-foreground)", fontFamily: "monospace" }}
                 dy={10}
                 minTickGap={30}
               />
               <YAxis
                 axisLine={false}
                 tickLine={false}
-                tick={{ fontSize: 10, fill: "#9ca3af", fontFamily: "monospace" }}
+                tick={{ fontSize: 10, fill: "var(--muted-foreground)", fontFamily: "monospace" }}
                 tickFormatter={(val) => {
                   if (val === 0) return "0";
                   return `${currencySymbol}${(val / 1000).toFixed(1)}k`;
                 }}
                 dx={-10}
               />
-              <CartesianGrid strokeDasharray="3 3" vertical={true} stroke="#f3f4f6" />
+              <CartesianGrid strokeDasharray="3 3" vertical={true} stroke="var(--muted)" />
               {!isDataEmpty && (
                 <Tooltip
-                  cursor={{ fill: '#f3f4f6' }}
+                  cursor={{ fill: 'var(--muted)' }}
                   contentStyle={{
-                    backgroundColor: '#111827',
+                    backgroundColor: 'var(--popover)',
                     borderRadius: "6px",
                     border: "none",
-                    color: '#fff',
+                    color: 'var(--popover-foreground)',
                     boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)"
                   }}
                   itemStyle={{ fontSize: "13px", fontFamily: "monospace" }}
-                  labelStyle={{ color: "#9ca3af", marginBottom: "4px", fontSize: "11px", fontWeight: "bold" }}
+                  labelStyle={{ color: "var(--muted-foreground)", marginBottom: "4px", fontSize: "11px", fontWeight: "bold" }}
                   formatter={(value: any) => [formatCurrency(Number(value || 0), currency)]}
                 />
               )}
               {avgExpense > 0 && (
-                <ReferenceLine y={avgExpense} stroke="#d1d5db" strokeDasharray="3 3" />
+                <ReferenceLine y={avgExpense} stroke="var(--border)" strokeDasharray="3 3" />
               )}
               {isDataEmpty && (
-                <ReferenceLine y={100} stroke="#f3f4f6" strokeDasharray="3 3" />
+                <ReferenceLine y={100} stroke="var(--muted)" strokeDasharray="3 3" />
               )}
-              <Bar dataKey="income" name="Income" fill="#14b8a6" radius={[2, 2, 0, 0]} stackId="a" />
-              <Bar dataKey="expense" name="Expense" fill="#8b5cf6" radius={[2, 2, 0, 0]} stackId="a" />
+              <Bar dataKey="income" name="Income" fill="var(--chart-income)" radius={[2, 2, 0, 0]} stackId="a" />
+              <Bar dataKey="expense" name="Expense" fill="var(--chart-expense)" radius={[2, 2, 0, 0]} stackId="a" />
             </BarChart>
           </ResponsiveContainer>
         </div>

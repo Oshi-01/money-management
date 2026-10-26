@@ -29,7 +29,7 @@ export function DeleteGoalButton({ id, title }: { id: string; title?: string }) 
         variant="outline"
         size="icon"
         aria-label="Delete goal"
-        className="text-red-500 hover:text-red-700 hover:bg-red-50 border-gray-200 h-8 w-8 rounded-full"
+        className="text-destructive hover:text-destructive hover:bg-danger-soft border-border h-8 w-8 rounded-full"
         onClick={() => setOpen(true)}
       >
         <Trash2 className="h-4 w-4" />

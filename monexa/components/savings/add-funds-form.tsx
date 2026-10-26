@@ -54,7 +54,7 @@ export function AddFundsForm({ goalId, onSuccess }: AddFundsFormProps) {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       {error && (
-        <div className="p-3 text-sm text-red-500 bg-red-100 rounded-md dark:bg-red-900/20 dark:text-red-400">
+        <div className="p-3 text-sm text-destructive bg-danger-soft rounded-md">
           {error}
         </div>
       )}
@@ -62,7 +62,7 @@ export function AddFundsForm({ goalId, onSuccess }: AddFundsFormProps) {
       <div className="space-y-2">
         <Label htmlFor={`amount-${goalId}`}>Amount to Add</Label>
         <Input id={`amount-${goalId}`} type="number" step="0.01" {...register("amount", { valueAsNumber: true })} />
-        {errors.amount && <p className="text-sm text-red-500">{errors.amount.message}</p>}
+        {errors.amount && <p className="text-sm text-destructive">{errors.amount.message}</p>}
       </div>
 
       <Button type="submit" className="w-full" disabled={isPending}>

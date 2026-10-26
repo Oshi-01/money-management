@@ -17,7 +17,7 @@ interface Budget {
 export function BudgetList({ budgets, currency }: { budgets: Budget[], currency: string }) {
   if (budgets.length === 0) {
     return (
-      <div className="flex h-48 w-full flex-col items-center justify-center rounded-lg border border-dashed bg-white dark:bg-gray-950/50">
+      <div className="flex h-48 w-full flex-col items-center justify-center rounded-lg border border-dashed bg-card">
         <p className="text-sm text-muted-foreground">You haven't set any budgets for this month yet.</p>
       </div>
     );

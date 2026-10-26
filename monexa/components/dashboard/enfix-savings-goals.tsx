@@ -1,79 +1,26 @@
-interface SavingsGoal {
-  id: string;
-  title: string;
-  targetAmount: number;
-  savedAmount: number;
-}
+import Link from "next/link";
+import { Check } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 
-interface EnfixSavingsGoalsProps {
-  goals: SavingsGoal[];
-}
+interface SavingsGoal { id: string; title: string; targetAmount: number; savedAmount: number }
 
-export function EnfixSavingsGoals({ goals }: EnfixSavingsGoalsProps) {
-  const colors = [
-    { stroke: "#f43f5e", bg: "#ffe4e6" }, // rose/pink
-    { stroke: "#10b981", bg: "#d1fae5" }, // emerald/green
-    { stroke: "#3b82f6", bg: "#dbeafe" }, // blue
-    { stroke: "#eab308", bg: "#fef9c3" }, // yellow
-  ];
-
-  const displayGoals = goals;
-
+export function EnfixSavingsGoals({ goals, currency = "USD" }: { goals: SavingsGoal[]; currency?: string }) {
   return (
-    <div className="w-full h-full">
-      <h2 className="text-[#1e293b] font-bold text-lg mb-6">Saving Goals</h2>
-      
-      {displayGoals.length === 0 ? (
-        <div className="flex items-center justify-center h-48 bg-white/50 rounded-3xl text-sm text-gray-400">
-          No savings goals yet.
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 gap-y-10 gap-x-6">
-          {displayGoals.slice(0, 4).map((goal, i) => {
-          const percent = Math.min(Math.round((goal.savedAmount / goal.targetAmount) * 100) || 0, 100);
-          const color = colors[i % colors.length];
-          const radius = 40;
-          const circumference = 2 * Math.PI * radius;
-          const strokeDashoffset = circumference - (percent / 100) * circumference;
-
+    <section className="app-panel">
+      <div className="flex items-center justify-between gap-3 px-6 pt-6 pb-1"><h2 className="text-lg font-semibold tracking-tight text-foreground">Savings goals</h2><Link href="/dashboard/savings" className="shrink-0 rounded text-xs font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">View all</Link></div>
+      <div className="divide-y divide-border/70 px-6">
+        {goals.length === 0 ? <p className="py-8 text-sm text-muted-foreground">Set a savings goal to track your progress.</p> : goals.slice(0, 4).map(goal => {
+          const percent = Math.max(0, Math.min(Math.round(goal.savedAmount / goal.targetAmount * 100) || 0, 100));
+          const complete = percent === 100;
           return (
-            <div key={goal.id} className="flex flex-col items-center justify-center">
-              <div className="relative w-28 h-28 flex items-center justify-center">
-                {/* Background Circle */}
-                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r={radius}
-                    fill="transparent"
-                    stroke={color.bg}
-                    strokeWidth="8"
-                  />
-                  {/* Progress Circle */}
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r={radius}
-                    fill="transparent"
-                    stroke={color.stroke}
-                    strokeWidth="8"
-                    strokeDasharray={circumference}
-                    strokeDashoffset={strokeDashoffset}
-                    strokeLinecap="round"
-                    className="transition-all duration-1000 ease-out"
-                  />
-                </svg>
-                {/* Center Text */}
-                <span className={`absolute text-3xl font-bold`} style={{ color: color.stroke }}>
-                  {percent}
-                </span>
-              </div>
-              <p className="mt-3 text-sm font-bold text-[#1e293b]">{goal.title}</p>
+            <div key={goal.id} className="py-5">
+              <div className="flex items-center justify-between gap-3"><p className="min-w-0 truncate text-sm font-medium text-foreground">{goal.title}</p><span className={`flex shrink-0 items-center gap-1 text-xs font-medium ${complete ? "text-success" : "text-muted-foreground"}`}>{complete && <Check aria-hidden="true" className="h-3 w-3" />}{complete ? "Complete" : `${percent}%`}</span></div>
+              <div role="progressbar" aria-label={goal.title} aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100} className="mt-3 h-2 overflow-hidden rounded-full bg-muted"><div className={`h-full rounded-full ${complete ? "bg-success" : "bg-progress"}`} style={{ width: `${percent}%` }} /></div>
+              <p className="mt-2 text-xs text-muted-foreground tabular-nums">{formatCurrency(goal.savedAmount, currency)} <span className="mx-1">of</span> {formatCurrency(goal.targetAmount, currency)}</p>
             </div>
           );
         })}
-        </div>
-      )}
-    </div>
+      </div>
+    </section>
   );
 }

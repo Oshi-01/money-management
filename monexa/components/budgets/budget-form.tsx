@@ -82,15 +82,15 @@ export function BudgetForm({ categories, currentMonth, budget, onSuccess }: Budg
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       {error && (
-        <div className="p-3 text-sm text-red-500 bg-red-100 rounded-md dark:bg-red-900/20 dark:text-red-400">
+        <div className="p-3 text-sm text-destructive bg-danger-soft rounded-md">
           {error}
         </div>
       )}
       <div className="space-y-4">
         <div className="space-y-2">
           <Label>Category</Label>
-          <Select 
-            onValueChange={(val) => setValue("categoryId", val || "")} 
+          <Select
+            onValueChange={(val) => setValue("categoryId", val || "")}
             value={categoryId}
           >
             <SelectTrigger>
@@ -102,19 +102,19 @@ export function BudgetForm({ categories, currentMonth, budget, onSuccess }: Budg
               ))}
             </SelectContent>
           </Select>
-          {errors.categoryId && <p className="text-sm text-red-500">{errors.categoryId.message}</p>}
+          {errors.categoryId && <p className="text-sm text-destructive">{errors.categoryId.message}</p>}
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="amount">Monthly Budget Limit</Label>
           <Input id="amount" type="number" step="0.01" {...register("amount", { valueAsNumber: true })} />
-          {errors.amount && <p className="text-sm text-red-500">{errors.amount.message}</p>}
+          {errors.amount && <p className="text-sm text-destructive">{errors.amount.message}</p>}
         </div>
-        
+
         <div className="space-y-2">
           <Label htmlFor="month">Month</Label>
           <Input id="month" type="month" {...register("month")} />
-          {errors.month && <p className="text-sm text-red-500">{errors.month.message}</p>}
+          {errors.month && <p className="text-sm text-destructive">{errors.month.message}</p>}
         </div>
       </div>
 

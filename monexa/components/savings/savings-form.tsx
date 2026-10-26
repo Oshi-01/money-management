@@ -83,12 +83,12 @@ export function SavingsForm({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       {error && (
-        <div className="p-3 text-sm text-red-500 bg-red-100 rounded-md dark:bg-red-900/20 dark:text-red-400">
+        <div className="p-3 text-sm text-destructive bg-danger-soft rounded-md">
           {error}
         </div>
       )}
       {success && (
-        <div className="p-3 text-sm text-emerald-500 bg-emerald-100 rounded-md dark:bg-emerald-900/20 dark:text-emerald-400">
+        <div className="p-3 text-sm text-success bg-success-soft rounded-md">
           {success}
         </div>
       )}
@@ -97,20 +97,20 @@ export function SavingsForm({
         <div className="space-y-2">
           <Label htmlFor="title">Goal Title</Label>
           <Input id="title" placeholder="e.g. Emergency Fund" {...register("title")} />
-          {errors.title && <p className="text-sm text-red-500">{errors.title.message}</p>}
+          {errors.title && <p className="text-sm text-destructive">{errors.title.message}</p>}
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="targetAmount">Target Amount</Label>
           <Input id="targetAmount" type="number" step="0.01" {...register("targetAmount", { valueAsNumber: true })} />
-          {errors.targetAmount && <p className="text-sm text-red-500">{errors.targetAmount.message}</p>}
+          {errors.targetAmount && <p className="text-sm text-destructive">{errors.targetAmount.message}</p>}
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="deadline">Target Date (Optional)</Label>
           <Input id="deadline" type="date" {...register("deadline")} />
-          {isEdit && <p className="text-xs text-gray-400">Clear the date to remove the deadline.</p>}
-          {errors.deadline && <p className="text-sm text-red-500">{errors.deadline.message}</p>}
+          {isEdit && <p className="text-xs text-muted-foreground">Clear the date to remove the deadline.</p>}
+          {errors.deadline && <p className="text-sm text-destructive">{errors.deadline.message}</p>}
         </div>
       </div>
 

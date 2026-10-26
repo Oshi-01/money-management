@@ -66,10 +66,10 @@ export function CategoryList({ categories }: { categories: Category[] }) {
   if (categories.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-800 mb-4">
-          <FolderOpen className="h-8 w-8 text-gray-400" />
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted mb-4">
+          <FolderOpen className="h-8 w-8 text-muted-foreground" />
         </div>
-        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">No categories yet</p>
+        <p className="text-sm font-medium text-foreground">No categories yet</p>
         <p className="text-xs text-muted-foreground mt-1">Create your first category to organize transactions.</p>
       </div>
     );
@@ -84,20 +84,20 @@ export function CategoryList({ categories }: { categories: Category[] }) {
           return (
             <div
               key={category.id}
-              className="flex items-center justify-between p-4 rounded-2xl border border-gray-100 bg-white transition-all duration-200 hover:shadow-sm hover:border-gray-200 group"
+              className="flex items-center justify-between p-4 rounded-2xl border border-border bg-card transition-all duration-200 hover:shadow-sm hover:border-border group"
             >
               <div className="flex items-center gap-3 min-w-0">
                 <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-                  isIncome ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
+                  isIncome ? "bg-income-soft text-income" : "bg-expense-soft text-expense"
                 }`}>
                   {isIncome ? <ArrowUpRight className="h-5 w-5" /> : <ArrowDownRight className="h-5 w-5" />}
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="font-bold text-[#1e293b] truncate">{category.name}</p>
-                    {isSystem && <Badge variant="secondary" className="text-[10px] h-4 px-1.5 bg-gray-100 text-gray-500 hover:bg-gray-200">System</Badge>}
+                    <p className="font-bold text-foreground truncate">{category.name}</p>
+                    {isSystem && <Badge variant="secondary" className="text-[10px] h-4 px-1.5 bg-muted text-muted-foreground hover:bg-border">System</Badge>}
                   </div>
-                  <p className={`text-xs font-medium mt-0.5 ${isIncome ? "text-emerald-500" : "text-rose-500"}`}>
+                  <p className={`text-xs font-medium mt-0.5 ${isIncome ? "text-income" : "text-expense"}`}>
                     {isIncome ? "Income" : "Expense"}
                   </p>
                 </div>
@@ -109,7 +109,7 @@ export function CategoryList({ categories }: { categories: Category[] }) {
                     size="icon"
                     aria-label={`Edit ${category.name}`}
                     onClick={() => setEditing(category)}
-                    className="h-8 w-8 rounded-full text-gray-400 transition-opacity hover:bg-emerald-50 hover:text-emerald-600 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100"
+                    className="h-8 w-8 rounded-full text-muted-foreground transition-opacity hover:bg-primary-soft hover:text-primary sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100"
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
@@ -118,7 +118,7 @@ export function CategoryList({ categories }: { categories: Category[] }) {
                     size="icon"
                     aria-label={`Delete ${category.name}`}
                     onClick={() => openDelete(category)}
-                    className="h-8 w-8 rounded-full text-gray-400 transition-opacity hover:bg-rose-50 hover:text-rose-500 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100"
+                    className="h-8 w-8 rounded-full text-muted-foreground transition-opacity hover:bg-danger-soft hover:text-destructive sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -156,27 +156,27 @@ export function CategoryList({ categories }: { categories: Category[] }) {
       >
         {!usage && (
           <div className="flex justify-center py-4">
-            <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
           </div>
         )}
 
         {usage && hasData && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-2xl bg-gray-50 p-4">
-                <p className="text-2xl font-bold text-[#1e293b]">{usage.transactions}</p>
-                <p className="text-xs font-medium text-gray-400">{usage.transactions === 1 ? "Transaction" : "Transactions"}</p>
+              <div className="rounded-2xl bg-muted p-4">
+                <p className="text-2xl font-bold text-foreground">{usage.transactions}</p>
+                <p className="text-xs font-medium text-muted-foreground">{usage.transactions === 1 ? "Transaction" : "Transactions"}</p>
               </div>
-              <div className="rounded-2xl bg-gray-50 p-4">
-                <p className="text-2xl font-bold text-[#1e293b]">{usage.budgets}</p>
-                <p className="text-xs font-medium text-gray-400">{usage.budgets === 1 ? "Monthly budget" : "Monthly budgets"}</p>
+              <div className="rounded-2xl bg-muted p-4">
+                <p className="text-2xl font-bold text-foreground">{usage.budgets}</p>
+                <p className="text-xs font-medium text-muted-foreground">{usage.budgets === 1 ? "Monthly budget" : "Monthly budgets"}</p>
               </div>
             </div>
 
             <div className="space-y-2">
               <Label>Move them to</Label>
               {moveOptions.length === 0 ? (
-                <p className="rounded-2xl bg-amber-50 p-3 text-sm text-amber-700">
+                <p className="rounded-2xl bg-warning-soft p-3 text-sm text-warning">
                   There&apos;s no other {target?.type.toLowerCase()} category. Create one first, then delete this one.
                 </p>
               ) : (
@@ -194,18 +194,18 @@ export function CategoryList({ categories }: { categories: Category[] }) {
             </div>
 
             {moveToName && (
-              <div className="flex items-center gap-2 rounded-2xl bg-emerald-50 p-3 text-sm text-emerald-700">
+              <div className="flex items-center gap-2 rounded-2xl bg-primary-soft p-3 text-sm text-primary">
                 <span className="font-semibold">{target?.name}</span>
                 <ArrowRight className="h-4 w-4 shrink-0" />
                 <span className="font-semibold">{moveToName}</span>
-                <span className="ml-auto text-xs text-emerald-600">
+                <span className="ml-auto text-xs text-primary">
                   {plural(usage.transactions, "transaction")}
                   {usage.budgets > 0 && `, ${plural(usage.budgets, "budget")}`}
                 </span>
               </div>
             )}
             {usage.budgets > 0 && (
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-muted-foreground">
                 If {moveToName ? <span className="font-semibold">{moveToName}</span> : "the new category"} already has a budget for the same month, the two limits are added together.
               </p>
             )}

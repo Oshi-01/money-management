@@ -17,12 +17,12 @@ interface LoanListProps {
 export function LoanList({ loans, currency, emptyMessage = "No loans found." }: LoanListProps) {
   if (loans.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center p-12 bg-white dark:bg-zinc-950 border border-dashed rounded-xl shadow-sm text-center">
-        <div className="bg-zinc-100 dark:bg-zinc-900 p-4 rounded-full mb-4">
-          <HandshakeIcon className="w-8 h-8 text-zinc-400" />
+      <div className="flex flex-col items-center justify-center p-12 bg-card border border-dashed rounded-xl shadow-sm text-center">
+        <div className="bg-muted p-4 rounded-full mb-4">
+          <HandshakeIcon className="w-8 h-8 text-muted-foreground" />
         </div>
-        <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100 mb-1">No Loans</h3>
-        <p className="text-zinc-500 max-w-sm">{emptyMessage}</p>
+        <h3 className="text-lg font-medium text-foreground mb-1">No Loans</h3>
+        <p className="text-muted-foreground max-w-sm">{emptyMessage}</p>
       </div>
     );
   }
