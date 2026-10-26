@@ -12,9 +12,9 @@ export function Card({ children, style, ...props }: ViewProps) { return <View st
 export function Title({ children }: { children: ReactNode }) { return <Text accessibilityRole="header" style={styles.title}>{children}</Text>; }
 export function Hint({ children }: { children: ReactNode }) { return <Text style={styles.hint}>{children}</Text>; }
 export function ErrorMessage({ message }: { message?: string }) { return message ? <Text accessibilityRole="alert" style={styles.error}>{message}</Text> : null; }
-export function Action({ title, onPress, busy = false, disabled = false, danger = false, secondary = false }: { title: string; onPress(): void; busy?: boolean; disabled?: boolean; danger?: boolean; secondary?: boolean }) {
+export function Action({ title, accessibilityLabel, onPress, busy = false, disabled = false, danger = false, secondary = false }: { title: string; accessibilityLabel?: string; onPress(): void; busy?: boolean; disabled?: boolean; danger?: boolean; secondary?: boolean }) {
   const onColor = danger || !secondary ? colors.onPrimary : colors.primary;
-  return <Pressable accessibilityRole="button" accessibilityState={{ disabled: disabled || busy, busy }} disabled={disabled || busy} onPress={onPress} style={[styles.button, secondary && styles.secondary, danger && { backgroundColor: colors.danger }, (disabled || busy) && { opacity: 0.5 }]}>{busy && <ActivityIndicator color={onColor} />}<Text style={[styles.buttonText, { color: onColor }]}>{title}</Text></Pressable>;
+  return <Pressable accessibilityRole="button" accessibilityLabel={accessibilityLabel ?? title} accessibilityState={{ disabled: disabled || busy, busy }} disabled={disabled || busy} onPress={onPress} style={[styles.button, secondary && styles.secondary, danger && { backgroundColor: colors.danger }, (disabled || busy) && { opacity: 0.5 }]}>{busy && <ActivityIndicator color={onColor} />}<Text style={[styles.buttonText, { color: onColor }]}>{title}</Text></Pressable>;
 }
 export function Field({ label, ...props }: TextInputProps & { label: string }) {
   return <View style={{ gap: 6 }}><Text style={styles.label}>{label}</Text><TextInput accessibilityLabel={label} placeholderTextColor={colors.muted} selectionColor={colors.primary} keyboardAppearance="light" style={styles.input} {...props} /></View>;

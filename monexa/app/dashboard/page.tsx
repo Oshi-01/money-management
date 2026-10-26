@@ -46,16 +46,16 @@ export default async function DashboardPage() {
           <h1 className="page-title">Dashboard</h1>
           <p className="page-description">Your money at a glance.</p>
         </div>
-        <NewTransactionDialog
-          categories={categories}
-          accounts={accounts}
-          budgets={budgets}
-          currency={currency}
-        />
+        <div className="hidden sm:block">
+          <NewTransactionDialog categories={categories} accounts={accounts} budgets={budgets} currency={currency} />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
-        <div className="xl:col-span-4"><EnfixStatCards balance={balance} currency={currency} trends={trends} /></div>
+        <div className="flex min-w-0 flex-col gap-3 xl:col-span-4">
+          <EnfixStatCards balance={balance} currency={currency} trends={trends} />
+          <div className="sm:hidden"><NewTransactionDialog categories={categories} accounts={accounts} budgets={budgets} currency={currency} /></div>
+        </div>
         <div className="min-h-80 xl:col-span-8"><EnfixBalanceTrend currency={currency} savingsTrend={savingsTrend} trends={trends} /></div>
       </div>
 

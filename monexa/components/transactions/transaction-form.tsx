@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import Link from "next/link";
 import { ArrowDownRight, ArrowUpRight, Loader2, Wallet } from "lucide-react";
 import { toast } from "sonner";
+import { createCategory } from "@/app/actions/categories";
+import { categoryInputSchema } from "@/shared/categories";
 import { createTransaction, updateTransaction } from "@/app/actions/transactions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -137,6 +138,11 @@ export function TransactionForm({
   onSuccess?: () => void;
 }) {
   const [isPending, startTransition] = useTransition();
+  const [categoryPending, startCategoryTransition] = useTransition();
+  const [addingCategory, setAddingCategory] = useState(false);
+  const [categoryName, setCategoryName] = useState("");
+  const [categoryError, setCategoryError] = useState("");
+  const [createdCategories, setCreatedCategories] = useState<Category[]>([]);
   const isEdit = !!transaction;
 
   const {
@@ -176,7 +182,8 @@ export function TransactionForm({
   const date = useWatch({ control, name: "date" });
 
   const isExpense = type === "EXPENSE";
-  const visibleCategories = categories.filter((c) => c.type === type);
+  const allCategories = [...categories, ...createdCategories.filter(category => !categories.some(existing => existing.id === category.id))];
+  const visibleCategories = allCategories.filter((c) => c.type === type);
   const budgetByCategory = useMemo(() => new Map((budgets ?? []).map((b) => [b.categoryId, b])), [budgets]);
 
   const today = toDateInputValue();
@@ -192,7 +199,25 @@ export function TransactionForm({
   const budgetLeft = budget ? budget.amount - projected : 0;
   const budgetPct = budget ? Math.min(100, Math.round((projected / budget.amount) * 100)) : 0;
 
+  function createInlineCategory() {
+    if (isPending || categoryPending) return;
+    const parsed = categoryInputSchema.safeParse({ name: categoryName, type });
+    if (!parsed.success) { setCategoryError(parsed.error.issues[0]?.message ?? "Enter a category name."); return; }
+    setCategoryError("");
+    startCategoryTransition(async () => {
+      try {
+        const form = new FormData(); form.set("name", parsed.data.name); form.set("type", parsed.data.type);
+        const result = await createCategory(form);
+        if (result.error || !result.category) { setCategoryError(result.error ?? "Could not create this category."); return; }
+        setCreatedCategories(current => [...current, result.category!]);
+        setValue("categoryId", result.category.id, { shouldValidate: true });
+        setCategoryName(""); setAddingCategory(false);
+      } catch { setCategoryError("Could not confirm category creation. Check your categories before retrying."); }
+    });
+  }
+
   const onSubmit = (data: TransactionFormValues) => {
+    if (categoryPending || isPending) return;
     startTransition(async () => {
       const formData = new FormData();
       formData.append("description", data.description);
@@ -219,7 +244,8 @@ export function TransactionForm({
   const submitLabel = isEdit ? "Save changes" : isExpense ? "Add expense" : "Add income";
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
+    <form onSubmit={handleSubmit(onSubmit)} noValidate>
+      <fieldset disabled={isPending || categoryPending} className="min-w-0 space-y-5">
       {/* Type */}
       <div role="radiogroup" aria-label="Transaction type" className="grid grid-cols-2 gap-1 rounded-2xl bg-muted p-1">
         {(["EXPENSE", "INCOME"] as const).map((t) => {
@@ -293,10 +319,7 @@ export function TransactionForm({
         {visibleCategories.length === 0 ? (
           <p className="rounded-2xl bg-warning-soft p-3 text-sm text-warning">
             You have no {isExpense ? "expense" : "income"} categories yet.{" "}
-            <Link href="/dashboard/categories" className="font-semibold underline">
-              Create one
-            </Link>
-            .
+            Add one below to continue.
           </p>
         ) : (
           <div role="radiogroup" aria-label="Category" className="flex flex-wrap gap-2">
@@ -316,6 +339,13 @@ export function TransactionForm({
             })}
           </div>
         )}
+
+        {addingCategory ? <div className="space-y-3 rounded-2xl border border-border bg-muted p-3">
+          <label htmlFor="transaction-category-name" className="text-xs font-medium text-muted-foreground">New {isExpense ? "expense" : "income"} category</label>
+          <Input id="transaction-category-name" aria-label="New category name" autoFocus value={categoryName} onChange={event => setCategoryName(event.target.value)} maxLength={40} onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); createInlineCategory(); } }} />
+          {categoryError && <p role="alert" className="text-sm text-danger">{categoryError}</p>}
+          <div className="flex flex-wrap gap-2"><Button type="button" onClick={createInlineCategory}>{categoryPending && <Loader2 className="h-4 w-4 animate-spin" />}Create and use category</Button><Button type="button" variant="ghost" onClick={() => { setAddingCategory(false); setCategoryError(""); }}>Cancel category creation</Button></div>
+        </div> : <Button type="button" variant="ghost" className="mt-2 h-9 px-2 text-primary" onClick={() => { setAddingCategory(true); setCategoryError(""); }}>Add a category</Button>}
 
         {budget && (
           <div className="mt-3 rounded-2xl bg-muted p-3.5">
@@ -393,6 +423,7 @@ export function TransactionForm({
         {submitLabel}
         {validAmount && <span className="ml-2 font-semibold opacity-80">· {formatCurrency(amount, currency)}</span>}
       </Button>
+      </fieldset>
     </form>
   );
 }

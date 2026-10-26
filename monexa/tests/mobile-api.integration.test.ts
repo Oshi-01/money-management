@@ -77,6 +77,68 @@ describe.skipIf(!enabled)("mobile API against isolated PostgreSQL", () => {
     } finally { vi.unstubAllEnvs(); vi.unstubAllGlobals(); }
   });
 
+  it("creates, lists, renames, and removes categories with ownership and duplicate checks", async () => {
+    expect((await call("categories", "GET", undefined, "")).status).toBe(401);
+    expect((await call("categories", "POST", { name: " ", type: "EXPENSE" })).status).toBe(400);
+    expect((await call("categories", "POST", { name: "x".repeat(41), type: "EXPENSE" })).status).toBe(400);
+    expect((await call("categories", "POST", { name: "Hidden owner", type: "EXPENSE", userId: otherId })).status).toBe(400);
+    const input = { name: "  Mobile custom  ", type: "EXPENSE" };
+    const result = await call("categories", "POST", input);
+    expect(result.status).toBe(201);
+    const id = result.body.category.id;
+    expect(result.body.category.name).toBe("Mobile custom");
+    expect((await call("categories", "POST", { ...input, name: "Mobile custom" })).status).toBe(409);
+    expect((await call("categories")).body.categories.some((category: { id: string }) => category.id === id)).toBe(true);
+    expect((await call("bootstrap")).body.categories.some((category: { id: string }) => category.id === id)).toBe(true);
+    expect((await call(`categories/${id}`, "GET", undefined, otherToken)).status).toBe(404);
+    expect((await call(`categories/${id}`, "PUT", input, otherToken)).status).toBe(404);
+    expect((await call(`categories/${id}`, "DELETE", undefined, otherToken)).status).toBe(404);
+    expect((await call(`categories/${id}`, "PUT", { name: "Mobile renamed", type: "INCOME" })).status).toBe(200);
+    expect((await call(`categories/${id}`)).body).toMatchObject({ name: "Mobile renamed", type: "INCOME", isSystem: false, transactions: 0, budgets: 0 });
+    expect((await call(`categories/${id}`, "DELETE")).status).toBe(200);
+    expect(await prisma.category.findUnique({ where: { id } })).toBeNull();
+  });
+
+  it("keeps system categories read-only", async () => {
+    const category = await prisma.category.create({ data: { name: "System shared test", type: "EXPENSE", userId: null } });
+    expect((await call(`categories/${category.id}`)).body.isSystem).toBe(true);
+    expect((await call(`categories/${category.id}`, "PUT", { name: "Override", type: "EXPENSE" })).status).toBe(403);
+    expect((await call(`categories/${category.id}`, "DELETE")).status).toBe(403);
+    await prisma.category.delete({ where: { id: category.id } });
+  });
+
+  it("moves used category data without losing transactions or changing wallet balances", async () => {
+    const source = (await call("categories", "POST", { name: "Move source", type: "EXPENSE" })).body.category;
+    const target = (await call("categories", "POST", { name: "Move target", type: "EXPENSE" })).body.category;
+    await prisma.budget.createMany({ data: [{ userId, categoryId: source.id, month: "2026-10", amount: 200, showOnDashboard: true }, { userId, categoryId: target.id, month: "2026-10", amount: 300, showOnDashboard: false }] });
+    expect((await call("transactions", "POST", { description: "Category move purchase", amount: 50, type: "EXPENSE", categoryId: source.id, accountId, date: "2026-10-27" })).status).toBe(201);
+    const transaction = await prisma.transaction.findFirstOrThrow({ where: { userId, description: "Category move purchase" } });
+    const before = (await prisma.account.findUniqueOrThrow({ where: { id: accountId } })).balance;
+    expect((await call(`categories/${source.id}`)).body).toMatchObject({ transactions: 1, budgets: 1 });
+    expect((await call(`categories/${source.id}`, "PUT", { name: "Wrong type", type: "INCOME" })).status).toBe(409);
+    expect((await call(`categories/${source.id}`, "DELETE")).status).toBe(409);
+    expect((await call(`categories/${source.id}?moveToId=${incomeCategory}`, "DELETE")).status).toBe(400);
+    expect((await call(`categories/${source.id}?moveToId=${otherCategory}`, "DELETE")).status).toBe(400);
+    expect((await call(`categories/${source.id}?moveToId=${target.id}`, "DELETE")).status).toBe(200);
+    expect((await prisma.transaction.findUniqueOrThrow({ where: { id: transaction.id } })).categoryId).toBe(target.id);
+    expect((await prisma.account.findUniqueOrThrow({ where: { id: accountId } })).balance).toBe(before);
+    expect(await prisma.budget.findUniqueOrThrow({ where: { userId_categoryId_month: { userId, categoryId: target.id, month: "2026-10" } } })).toMatchObject({ amount: 500, showOnDashboard: true });
+    await call(`transactions/${transaction.id}`, "DELETE");
+    await prisma.budget.deleteMany({ where: { userId, categoryId: target.id } });
+    await call(`categories/${target.id}`, "DELETE");
+  });
+
+  it("seeds defaults for a newly signed-in mobile user", async () => {
+    const { hashPassword } = await import("@/lib/user-auth");
+    const fresh = await prisma.user.create({ data: { email: "fresh-categories@example.com", password: await hashPassword(password) } });
+    const freshToken = (await call("login", "POST", { email: fresh.email, password }, "")).body.token;
+    const first = await call("bootstrap", "GET", undefined, freshToken);
+    expect(first.body.categories).toHaveLength(12);
+    await call("bootstrap", "GET", undefined, freshToken);
+    expect(await prisma.category.count({ where: { userId: fresh.id } })).toBe(12);
+    await prisma.user.delete({ where: { id: fresh.id } });
+  });
+
   it("tracks all requested wallet types and isolates accounts between users", async () => {
     expect((await call("accounts", "GET", undefined, "")).status).toBe(401);
     expect((await call("accounts", "POST", { name: "Unsafe", type: "VISA_DEBIT", last4: "4111111111111111", amount: 100 })).status).toBe(400);

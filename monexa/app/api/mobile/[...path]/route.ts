@@ -10,6 +10,8 @@ import * as transactions from "@/lib/services/transactions";
 import * as loans from "@/lib/services/loans";
 import { interpretVoice } from "@/lib/voice-ai";
 import * as wallets from "@/lib/services/wallets";
+import * as categories from "@/lib/services/categories";
+import { categoryInputSchema } from "@/shared/categories";
 
 export const runtime = "nodejs";
 const credentials = z.object({ email: emailSchema, password: loginPasswordSchema });
@@ -40,6 +42,29 @@ async function handle(request: Request, context: Context): Promise<Response> {
     const session = await authenticateMobile(request);
     if (!session) throw new MobileApiError("Your session has expired. Please sign in again.", 401);
     const userId = session.user.id;
+    if (endpoint === "categories" && method === "GET") return mobileJson({ categories: await categories.getManagedCategories(userId) });
+    if (endpoint === "categories" && method === "POST") {
+      const category = await categories.createCategory(userId, categoryInputSchema.parse(await readMobileJson(request)));
+      revalidatePath("/dashboard", "layout");
+      return mobileJson({ category: { id: category.id, name: category.name, type: category.type } }, 201);
+    }
+    if (path[0] === "categories" && path.length === 2) {
+      const id = z.string().min(1).max(100).parse(path[1]);
+      if (method === "GET") return mobileJson(await categories.getManagedCategory(userId, id));
+      if (method === "PUT") {
+        const category = await categories.updateCategory(userId, id, categoryInputSchema.parse(await readMobileJson(request)));
+        revalidatePath("/dashboard", "layout");
+        return mobileJson({ category: { id: category.id, name: category.name, type: category.type } });
+      }
+      if (method === "DELETE") {
+        const moveToId = z.string().max(100).optional().parse(new URL(request.url).searchParams.get("moveToId") ?? undefined);
+        const result = await categories.deleteCategory(userId, id, moveToId);
+        revalidatePath("/dashboard", "layout");
+        return mobileJson(result);
+      }
+      throw new MobileApiError("Method not allowed", 405);
+    }
+
     if (endpoint === "accounts" && method === "GET") return mobileJson({ wallets: await wallets.getWallets(userId) });
     if (endpoint === "accounts" && method === "POST") {
       const wallet = await wallets.createWallet(userId, await readMobileJson(request));
@@ -64,9 +89,9 @@ async function handle(request: Request, context: Context): Promise<Response> {
       return mobileJson({ message: "Signed out" });
     }
     if (endpoint === "bootstrap" && method === "GET") {
-      const [user, categories, accounts, totals, activeLoans] = await Promise.all([
+      const [user, userCategories, accounts, totals, activeLoans] = await Promise.all([
         prisma.user.findUniqueOrThrow({ where: { id: userId }, select: mobileUserSelect }),
-        prisma.category.findMany({ where: { OR: [{ userId }, { userId: null }] }, select: { id: true, name: true, type: true }, orderBy: { name: "asc" } }),
+        categories.getCategories(userId).then(items => items.map(({ id, name, type }) => ({ id, name, type }))),
         prisma.account.findMany({ where: { userId }, select: { id: true, name: true, balance: true }, orderBy: { createdAt: "asc" } }),
         prisma.transaction.groupBy({ by: ["type"], where: { userId }, _sum: { amount: true } }),
         prisma.loan.groupBy({ by: ["loanType"], where: { userId, includeInTotal: true }, _sum: { balance: true } }),
@@ -75,7 +100,7 @@ async function handle(request: Request, context: Context): Promise<Response> {
       const expense = totals.find(t => t.type === "EXPENSE")?._sum.amount ?? 0;
       const borrowed = activeLoans.find(l => l.loanType === "BORROWED")?._sum.balance ?? 0;
       const lent = activeLoans.find(l => l.loanType === "LENT")?._sum.balance ?? 0;
-      return mobileJson({ user, categories, accounts, dashboard: { income, expense, borrowed, lent, balance: income + borrowed - expense - lent } });
+      return mobileJson({ user, categories: userCategories, accounts, dashboard: { income, expense, borrowed, lent, balance: income + borrowed - expense - lent } });
     }
     if (endpoint === "transactions" && method === "GET") {
       const url = new URL(request.url);
@@ -122,6 +147,7 @@ async function handle(request: Request, context: Context): Promise<Response> {
     if (result.success) revalidatePath("/dashboard", "layout");
     return actionResponse(result, created ? 201 : 200);
   } catch (error) {
+    if (error instanceof categories.CategoryError) return mobileJson({ error: error.message }, error.status);
     if (error instanceof wallets.WalletError) return mobileJson({ error: error.message }, error.status);
     if (error instanceof MobileApiError) return mobileJson({ error: error.message }, error.status);
     if (error instanceof z.ZodError) return mobileJson({ error: error.issues[0]?.message ?? "Invalid input" }, 400);
