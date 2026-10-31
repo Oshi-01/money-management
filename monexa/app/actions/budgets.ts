@@ -5,7 +5,7 @@ import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { carryOverBudgets } from "@/lib/budget-carry-over";
-import { toMonthStr } from "@/lib/dates";
+import { getUserCalendar } from "@/lib/user-calendar";
 
 const createBudgetSchema = z.object({
   categoryId: z.string().min(1, "Category is required"),
@@ -146,7 +146,8 @@ export async function getEnfixBudgetsData(monthStr: string) {
     const tenMonthsAgo = new Date(year, month - 10, 1);
 
     // --- Weekly setup: last 8 weeks (Mon-Sun), anchored to today ---
-    const now = new Date();
+    const { today } = await getUserCalendar();
+    const now = new Date(`${today}T12:00:00`);
     const startOfWeek = (d: Date) => {
       const date = new Date(d);
       const day = date.getDay(); // 0 = Sun
@@ -442,7 +443,7 @@ export async function updateDashboardBudgets(budgetIds: string[]) {
   if (!session?.user?.id) return { error: "Unauthorized" };
 
   const userId = session.user.id;
-  const month = toMonthStr();
+  const { currentMonth: month } = await getUserCalendar();
   const uniqueIds = [...new Set(budgetIds)];
 
   try {

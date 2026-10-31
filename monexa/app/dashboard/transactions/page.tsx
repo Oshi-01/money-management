@@ -6,7 +6,7 @@ import { TransactionList } from "@/components/transactions/transaction-list";
 import { TransactionFilters } from "@/components/transactions/transaction-filters";
 import { TransactionsPagination } from "@/components/transactions/transactions-pagination";
 import { PageHeader } from "@/components/dashboard/page-header";
-import { toMonthStr } from "@/lib/dates";
+import { getUserCalendar } from "@/lib/user-calendar";
 import { formatCurrency } from "@/lib/utils";
 import { NewTransactionDialog } from "@/components/transactions/new-transaction-dialog";
 
@@ -37,7 +37,7 @@ export default async function TransactionsPage(
   };
   const isFiltered = Object.values(filters).some(Boolean);
   const requestedPage = parseInt(param("page") ?? "1", 10);
-  const currentMonth = toMonthStr(); // YYYY-MM, local time like the budgets page
+  const { currentMonth } = await getUserCalendar();
 
   const [transactionsData, categories, accounts, userSettings, budgetData] = await Promise.all([
     getTransactions(requestedPage, PAGE_SIZE, filters),

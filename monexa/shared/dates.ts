@@ -34,8 +34,44 @@ export function isValidMonth(value: unknown): value is string {
 }
 
 /** Use a month from the URL if it is valid, otherwise the current month. */
-export function monthOrCurrent(value: unknown): string {
-  return isValidMonth(value) ? value : toMonthStr();
+export function monthOrCurrent(value: unknown, currentMonth: string = toMonthStr()): string {
+  return isValidMonth(value) ? value : currentMonth;
+}
+
+export const TIME_ZONE_COOKIE = "monexa-time-zone";
+
+/** Choose a valid IANA timezone without depending on the server's timezone. */
+export function resolveTimeZone(...values: (string | null | undefined)[]): string {
+  for (const value of values) {
+    if (!value) continue;
+    try {
+      return new Intl.DateTimeFormat("en-US", { timeZone: value }).resolvedOptions().timeZone;
+    } catch {
+      // Ignore stale or malformed cookies/headers and try the next source.
+    }
+  }
+  return "UTC";
+}
+
+/** Calendar values for an instant in the user's timezone, on any host. */
+export function getCalendarDate(timeZone: string, now: Date = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find(p => p.type === type)!.value;
+  const year = part("year");
+  const month = part("month");
+  const day = part("day");
+  const daysInMonth = new Date(Date.UTC(Number(year), Number(month), 0)).getUTCDate();
+
+  return {
+    today: `${year}-${month}-${day}`,
+    currentMonth: `${year}-${month}`,
+    daysLeft: daysInMonth - Number(day) + 1,
+  };
 }
 
 /** "YYYY-MM" -> local Date on the 1st of that month. */

@@ -1,16 +1,16 @@
 "use client";
 
 import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
-import { addMonths, formatMonthLabel, toMonthStr } from "@/lib/dates";
+import { addMonths, formatMonthLabel } from "@/lib/dates";
 import { useQueryParams } from "@/lib/use-query-params";
 
 /**
  * Previous / next month control. The chosen month lives in the URL
  * (?month=YYYY-MM), so the view can be bookmarked and survives a refresh.
  */
-export function MonthSwitcher({ month }: { month: string }) {
+export function MonthSwitcher({ month, currentMonth }: { month: string; currentMonth: string }) {
   const { update, isPending } = useQueryParams();
-  const current = toMonthStr();
+  const current = currentMonth;
   const isCurrent = month === current;
 
   const go = (m: string) => update({ month: m === current ? null : m });

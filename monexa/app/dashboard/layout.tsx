@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { Toaster } from "@/components/ui/sonner";
 import { TrendingUp } from "lucide-react";
 import Link from "next/link";
+import { TimeZoneSync } from "@/components/dashboard/time-zone-sync";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex h-dvh overflow-hidden bg-background">
+      <TimeZoneSync />
       <aside className="hidden w-60 shrink-0 flex-col px-5 py-7 lg:flex">
         <Link href="/dashboard" aria-label="Monexa home" className="mb-7 flex items-center gap-3 px-3">
           <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground"><TrendingUp aria-hidden="true" className="h-6 w-6" /></span>

@@ -13,6 +13,8 @@ interface TotalBudgetCardProps {
   monthLabel: string;
   /** Show the per-day allowance only while the month is still running. */
   isCurrentMonth: boolean;
+  /** Days remaining, including today, in the user's timezone. */
+  daysLeft: number;
 }
 
 export function TotalBudgetCard({
@@ -22,6 +24,7 @@ export function TotalBudgetCard({
   currency,
   monthLabel,
   isCurrentMonth,
+  daysLeft,
 }: TotalBudgetCardProps) {
   const remaining = totalBudget - totalSpent;
   const isOver = remaining < 0;
@@ -34,10 +37,6 @@ export function TotalBudgetCard({
       ? { label: "Nearing limit", pill: "bg-warning-soft text-warning", bar: "bg-warning" }
       : { label: "On track", pill: "bg-muted text-secondary-foreground", bar: "bg-progress" };
 
-  // What can still be spent per day for the rest of this month (today included).
-  const now = new Date();
-  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-  const daysLeft = daysInMonth - now.getDate() + 1;
   const showDaily = isCurrentMonth && !isOver && remaining > 0;
 
   const stats = [
@@ -71,7 +70,7 @@ export function TotalBudgetCard({
       aria-label="Total monthly budget"
       className="rounded-3xl border border-border bg-card p-5 shadow-sm sm:p-6"
     >
-      <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
         {/* Total */}
         <div className="flex items-center gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-muted text-secondary-foreground">
@@ -89,13 +88,13 @@ export function TotalBudgetCard({
         {/* Spent / remaining / per day */}
         <div className={cn("grid gap-3", stats.length === 3 ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-1 sm:grid-cols-2")}>
           {stats.map(({ label, value, icon: Icon, tone, valueClass }) => (
-            <div key={label} className="flex min-w-40 items-center gap-3 rounded-2xl bg-muted p-3.5">
+            <div key={label} className="flex min-w-0 items-center gap-3 rounded-2xl bg-muted p-3.5">
               <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full", tone)}>
                 <Icon className="h-4 w-4" />
               </div>
               <div className="min-w-0">
-                <p className="truncate text-xs font-medium text-muted-foreground">{label}</p>
-                <p className={cn("truncate text-base font-bold tabular-nums text-foreground", valueClass)}>{value}</p>
+                <p className="text-xs font-medium text-muted-foreground">{label}</p>
+                <p className={cn("break-words text-base font-bold tabular-nums text-foreground", valueClass)}>{value}</p>
               </div>
             </div>
           ))}

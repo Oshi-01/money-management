@@ -6,7 +6,8 @@ import { EnfixBudgetsClient } from "@/components/budgets/enfix-budgets-client";
 import { MonthSwitcher } from "@/components/dashboard/month-switcher";
 import { TotalBudgetCard } from "@/components/budgets/total-budget-card";
 import { NewTransactionDialog } from "@/components/transactions/new-transaction-dialog";
-import { formatMonthLabel, monthOrCurrent, toMonthStr } from "@/lib/dates";
+import { formatMonthLabel, monthOrCurrent } from "@/lib/dates";
+import { getUserCalendar } from "@/lib/user-calendar";
 
 export const metadata = {
   title: "Budgets - Monexa",
@@ -19,9 +20,10 @@ export default async function BudgetsPage(
   }
 ) {
   const searchParams = await props.searchParams;
+  const { currentMonth, daysLeft } = await getUserCalendar();
 
   // ?month=YYYY-MM from the month switcher; anything invalid falls back to the current month.
-  const selectedMonth = monthOrCurrent(searchParams?.month);
+  const selectedMonth = monthOrCurrent(searchParams?.month, currentMonth);
 
   const [budgetData, categories, accounts, userSettings] = await Promise.all([
     getEnfixBudgetsData(selectedMonth),
@@ -35,21 +37,21 @@ export default async function BudgetsPage(
 
   return (
     <div className="space-y-6 pb-8">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="page-title">Budgets</h2>
+      <div className="flex flex-col justify-between gap-4 xl:flex-row xl:flex-wrap xl:items-center">
+        <div className="min-w-0">
+          <h1 className="page-title">Budgets</h1>
           <p className="page-description">
             Track your spending and stay within your limits.
           </p>
         </div>
-        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
+        <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center xl:w-auto">
           <NewTransactionDialog
             categories={categories}
             accounts={accounts}
             budgets={budgets}
             currency={currency}
           />
-          <MonthSwitcher month={selectedMonth} />
+          <MonthSwitcher month={selectedMonth} currentMonth={currentMonth} />
         </div>
       </div>
 
@@ -60,7 +62,8 @@ export default async function BudgetsPage(
           count={budgets.length}
           currency={currency}
           monthLabel={formatMonthLabel(selectedMonth)}
-          isCurrentMonth={selectedMonth === toMonthStr()}
+          isCurrentMonth={selectedMonth === currentMonth}
+          daysLeft={daysLeft}
         />
       )}
 

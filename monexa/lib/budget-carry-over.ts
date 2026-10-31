@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import { getUserCalendar } from "@/lib/user-calendar";
 
 const toMonthStr = (year: number, monthIndex: number) => {
   const d = new Date(year, monthIndex, 1);
@@ -19,8 +20,7 @@ const toMonthStr = (year: number, monthIndex: number) => {
  */
 export async function carryOverBudgets(userId: string, monthStr: string) {
   try {
-    const now = new Date();
-    const currentMonth = toMonthStr(now.getFullYear(), now.getMonth());
+    const { currentMonth } = await getUserCalendar();
     if (monthStr > currentMonth) return;
 
     const initialized = await prisma.budgetMonthState.findUnique({

@@ -7,6 +7,7 @@ import { MonthSwitcher } from "@/components/dashboard/month-switcher";
 import { ArrowUpRight, ArrowDownRight, Scale } from "lucide-react";
 import { formatMonthLabel, monthOrCurrent } from "@/lib/dates";
 import { formatCurrency } from "@/lib/utils";
+import { getUserCalendar } from "@/lib/user-calendar";
 
 export const metadata = {
   title: "Reports & Analytics - Monexa",
@@ -19,7 +20,8 @@ export default async function ReportsPage(
   }
 ) {
   const searchParams = await props.searchParams;
-  const month = monthOrCurrent(searchParams?.month);
+  const { currentMonth } = await getUserCalendar();
+  const month = monthOrCurrent(searchParams?.month, currentMonth);
   const periodLabel = formatMonthLabel(month);
 
   const [reportData, userSettings] = await Promise.all([
@@ -39,7 +41,7 @@ export default async function ReportsPage(
   return (
     <div className="space-y-6 pb-8">
       <PageHeader title="Reports" description="See where your money goes, month by month.">
-        <MonthSwitcher month={month} />
+        <MonthSwitcher month={month} currentMonth={currentMonth} />
       </PageHeader>
 
       {/* Month summary */}

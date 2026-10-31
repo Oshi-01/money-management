@@ -3,6 +3,7 @@
 import prisma from "@/lib/prisma";
 import { auth } from "@/auth";
 import { carryOverBudgets } from "@/lib/budget-carry-over";
+import { getUserCalendar } from "@/lib/user-calendar";
 
 export async function getEnfixProfileData() {
   try {
@@ -16,8 +17,8 @@ export async function getEnfixProfileData() {
     if (!user) throw new Error("User not found");
 
     // 1. Calculate Monthly Budget vs Spent
-    const now = new Date();
-    const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const { today, currentMonth: currentMonthStr } = await getUserCalendar();
+    const now = new Date(`${today}T12:00:00`);
     const mStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const mEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
 

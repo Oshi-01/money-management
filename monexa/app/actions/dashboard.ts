@@ -3,7 +3,7 @@
 import prisma from "@/lib/prisma";
 import { auth } from "@/auth";
 import { carryOverBudgets } from "@/lib/budget-carry-over";
-import { toMonthStr } from "@/lib/dates";
+import { getUserCalendar } from "@/lib/user-calendar";
 
 export async function getDashboardData() {
   const session = await auth();
@@ -257,7 +257,8 @@ export async function getDashboardData() {
   });
 
   // 7. Monthly Budgets
-  const currentMonthStr = toMonthStr(); // YYYY-MM, local time like the budgets page
+  const { currentMonth: currentMonthStr } = await getUserCalendar();
+  const [budgetYear, budgetMonth] = currentMonthStr.split("-").map(Number);
   await carryOverBudgets(userId, currentMonthStr);
   const [budgets, currentMonthExpenses] = await Promise.all([
     prisma.budget.findMany({
@@ -271,8 +272,8 @@ export async function getDashboardData() {
         userId,
         type: "EXPENSE",
         date: {
-          gte: firstDayThisMonth,
-          lt: new Date(now.getFullYear(), now.getMonth() + 1, 1),
+          gte: new Date(budgetYear, budgetMonth - 1, 1),
+          lt: new Date(budgetYear, budgetMonth, 1),
         },
       },
       _sum: { amount: true },

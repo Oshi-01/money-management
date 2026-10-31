@@ -84,7 +84,7 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
 
   if (!selectedBudget) {
     return (
-      <div className="flex flex-col items-center justify-center h-[60vh] space-y-4">
+      <div className="flex min-h-[45dvh] flex-col items-center justify-center space-y-4 py-6">
         <div className="bg-card p-6 rounded-2xl shadow-sm text-center">
           <Target className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
           <h2 className="text-xl font-bold text-foreground mb-2">No Budgets Yet</h2>
@@ -165,13 +165,13 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 ">
+    <div className="flex min-w-0 flex-col gap-6 xl:flex-row">
 
       {/* Left Sidebar: Budget List */}
-      <div className="w-full lg:w-80 shrink-0 space-y-4">
+      <div className="min-w-0 w-full shrink-0 space-y-4 xl:w-72 2xl:w-80">
         <h2 className="text-foreground font-bold text-lg px-2">Budgets List</h2>
 
-        <div className="space-y-4">
+        <div role="region" aria-label="Budget categories" tabIndex={0} className="flex gap-3 overflow-x-auto pb-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring xl:flex-col xl:gap-4 xl:overflow-visible xl:pb-0">
           {budgets.map(b => {
             const BIcon = getCategoryIcon(b.category.name);
             const isActive = b.id === selectedId;
@@ -185,19 +185,19 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
                 tabIndex={0}
                 aria-pressed={isActive}
                 onKeyDown={event => { if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); setSelectedId(b.id); } }}
-                className={`cursor-pointer rounded-2xl p-5 transition-all ${isActive
+                className={`w-[min(17rem,100%)] shrink-0 cursor-pointer rounded-2xl p-4 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring xl:w-auto xl:p-5 ${isActive
                     ? 'border border-primary bg-primary-soft text-foreground'
                     : 'border border-border bg-card text-foreground hover:bg-muted'
                   }`}
               >
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <div className={`p-2.5 rounded-xl ${isActive ? 'bg-card text-primary' : 'bg-muted text-secondary-foreground'}`}>
+                <div className="mb-4 flex items-start justify-between gap-2">
+                  <div className="flex min-w-0 items-start gap-3">
+                    <div className={`shrink-0 p-2.5 rounded-xl ${isActive ? 'bg-card text-primary' : 'bg-muted text-secondary-foreground'}`}>
                       <BIcon className="w-5 h-5" />
                     </div>
-                    <div>
-                      <h3 className="font-bold">{b.category.name}</h3>
-                      <p className={`text-xs ${isActive ? 'text-secondary-foreground' : 'text-muted-foreground'}`}>
+                    <div className="min-w-0">
+                      <h3 className="break-words [overflow-wrap:anywhere] font-bold">{b.category.name}</h3>
+                      <p className={`break-words text-xs ${isActive ? 'text-secondary-foreground' : 'text-muted-foreground'}`}>
                         {formatCurrency(b.amount, currency)}
                       </p>
                     </div>
@@ -211,7 +211,7 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
                         setSelectedId(b.id);
                         setEditing(true);
                       }}
-                      className={`rounded-full p-1.5 transition-colors ${isActive ? "text-primary hover:bg-card" : "text-muted-foreground hover:bg-primary-soft hover:text-primary"}`}
+                      className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${isActive ? "text-primary hover:bg-card" : "text-muted-foreground hover:bg-primary-soft hover:text-primary"}`}
                     >
                       <Pencil className="h-3.5 w-3.5" />
                     </button>
@@ -223,14 +223,14 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
                         setSelectedId(b.id);
                         setDeleting(true);
                       }}
-                      className={`rounded-full p-1.5 transition-colors ${"text-muted-foreground hover:bg-danger-soft hover:text-destructive"}`}
+                      className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-danger-soft hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 </div>
 
-                <div className="flex items-end justify-between mb-2">
+                <div className="mb-2 flex flex-wrap items-end justify-between gap-x-2 gap-y-1 break-words tabular-nums">
                   <span className="font-bold text-sm">{formatCurrency(b.spentAmount, currency)}</span>
                   <span className={`text-xs ${isActive ? 'text-secondary-foreground' : 'text-muted-foreground'}`}>
                     {formatCurrency(b.amount, currency)}
@@ -281,16 +281,16 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
       <div className="min-w-0 flex-1 space-y-6">
 
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold text-foreground">{selectedBudget.category.name}</h1>
+        <div className="flex flex-col justify-between gap-4 2xl:flex-row 2xl:flex-wrap 2xl:items-center">
+          <div className="min-w-0">
+            <div className="flex items-start gap-2">
+              <h2 className="min-w-0 break-words [overflow-wrap:anywhere] text-2xl font-bold text-foreground">{selectedBudget.category.name}</h2>
               <Button
                 variant="ghost"
                 size="icon"
                 aria-label={`Edit ${selectedBudget.category.name} budget`}
                 onClick={() => setEditing(true)}
-                className="h-8 w-8 rounded-full text-muted-foreground hover:bg-primary-soft hover:text-primary"
+                className="h-10 w-10 shrink-0 rounded-full text-muted-foreground hover:bg-primary-soft hover:text-primary"
               >
                 <Pencil className="h-4 w-4" />
               </Button>
@@ -299,7 +299,7 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
                 size="icon"
                 aria-label={`Delete ${selectedBudget.category.name} budget`}
                 onClick={() => setDeleting(true)}
-                className="h-8 w-8 rounded-full text-muted-foreground hover:bg-danger-soft hover:text-destructive"
+                className="h-10 w-10 shrink-0 rounded-full text-muted-foreground hover:bg-danger-soft hover:text-destructive"
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -337,33 +337,33 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
         )}
 
         {/* 3 Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-card rounded-2xl p-5 shadow-sm border border-border flex items-center justify-between">
-            <div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="flex min-w-0 flex-wrap items-center justify-between gap-2 rounded-2xl border border-border bg-card p-5 shadow-sm">
+            <div className="min-w-0 flex-1">
               <p className="text-xs text-muted-foreground font-medium mb-1">Total Budget</p>
-              <h3 className="text-xl font-bold text-foreground">{formatCurrency(periodView.totalBudget, currency)}</h3>
+              <h3 className="break-words text-xl font-bold tabular-nums text-foreground">{formatCurrency(periodView.totalBudget, currency)}</h3>
             </div>
-            <div className="w-8 h-8 rounded-full bg-muted text-secondary-foreground flex items-center justify-center">
+            <div className="w-8 h-8 shrink-0 rounded-full bg-muted text-secondary-foreground flex items-center justify-center">
               <DollarSign className="w-4 h-4" />
             </div>
           </div>
 
-          <div className="bg-card rounded-2xl p-5 shadow-sm border border-border flex items-center justify-between">
-            <div>
+          <div className="flex min-w-0 flex-wrap items-center justify-between gap-2 rounded-2xl border border-border bg-card p-5 shadow-sm">
+            <div className="min-w-0 flex-1">
               <p className="text-xs text-muted-foreground font-medium mb-1">Spent</p>
-              <h3 className="text-xl font-bold text-foreground">{formatCurrency(periodView.spent, currency)}</h3>
+              <h3 className="break-words text-xl font-bold tabular-nums text-foreground">{formatCurrency(periodView.spent, currency)}</h3>
             </div>
-            <div className="w-8 h-8 rounded-full bg-warning-soft text-warning flex items-center justify-center">
+            <div className="w-8 h-8 shrink-0 rounded-full bg-warning-soft text-warning flex items-center justify-center">
               <DollarSign className="w-4 h-4" />
             </div>
           </div>
 
-          <div className="bg-card rounded-2xl p-5 shadow-sm border border-border flex items-center justify-between">
-            <div>
+          <div className="flex min-w-0 flex-wrap items-center justify-between gap-2 rounded-2xl border border-border bg-card p-5 shadow-sm">
+            <div className="min-w-0 flex-1">
               <p className="text-xs text-muted-foreground font-medium mb-1">Remaining</p>
-              <h3 className="text-xl font-bold text-foreground">{formatCurrency(remaining, currency)}</h3>
+              <h3 className="break-words text-xl font-bold tabular-nums text-foreground">{formatCurrency(remaining, currency)}</h3>
             </div>
-            <div className="w-8 h-8 rounded-full bg-muted text-muted-foreground flex items-center justify-center">
+            <div className="w-8 h-8 shrink-0 rounded-full bg-muted text-muted-foreground flex items-center justify-center">
               <DollarSign className="w-4 h-4" />
             </div>
           </div>
@@ -372,7 +372,7 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
         {/* Budget Utilization */}
         <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
           <h3 className="text-lg font-bold text-foreground mb-6">Budget Utilization</h3>
-          <div className="flex justify-between text-sm font-bold text-muted-foreground mb-2">
+          <div className="mb-2 flex flex-wrap justify-between gap-x-4 gap-y-1 text-sm font-bold tabular-nums text-muted-foreground">
             <span>{formatCurrency(periodView.spent, currency)} spent</span>
             <span>{formatCurrency(periodView.totalBudget, currency)} total</span>
           </div>
@@ -382,7 +382,7 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
               style={{ width: `${percent}%` }}
             />
           </div>
-          <div className="flex justify-between text-xs font-bold mt-2">
+          <div className="mt-2 flex flex-wrap justify-between gap-x-4 gap-y-1 text-xs font-bold tabular-nums">
             <span className={periodView.isOverBudget ? 'text-warning' : 'text-muted-foreground'}>
               {percent}% of budget used
             </span>
@@ -393,12 +393,12 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
         </div>
 
         {/* Budget Period Chart & Comparative Analysis Row */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div className="grid min-w-0 grid-cols-1 gap-6 2xl:grid-cols-2">
 
           {/* Budget Period Stacked Bar Chart */}
           <div className="bg-card rounded-2xl p-6 shadow-sm border border-border flex flex-col">
             <h3 className="text-lg font-bold text-foreground mb-6">Budget Period</h3>
-            <div className="flex-1 min-h-[200px]">
+            <div className="h-56 min-w-0">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
                   <XAxis
@@ -428,9 +428,9 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
             <h3 className="text-lg font-bold text-foreground mb-6">Comparative Analysis</h3>
 
             <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-muted text-secondary-foreground flex items-center justify-center">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="w-10 h-10 shrink-0 rounded-full bg-muted text-secondary-foreground flex items-center justify-center">
                     <Wallet className="w-4 h-4" />
                   </div>
                   <div>
@@ -438,12 +438,12 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
                     <p className="text-xs text-muted-foreground">{periodLabels.previousSub}</p>
                   </div>
                 </div>
-                <span className="font-bold text-secondary-foreground">{formatCurrency(periodView.lastPeriodSpent, currency)}</span>
+                <span className="break-words font-bold tabular-nums text-secondary-foreground">{formatCurrency(periodView.lastPeriodSpent, currency)}</span>
               </div>
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-muted text-secondary-foreground flex items-center justify-center">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="w-10 h-10 shrink-0 rounded-full bg-muted text-secondary-foreground flex items-center justify-center">
                     <Wallet className="w-4 h-4" />
                   </div>
                   <div>
@@ -451,12 +451,12 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
                     <p className="text-xs text-muted-foreground">{periodLabels.currentSub}</p>
                   </div>
                 </div>
-                <span className="font-bold text-secondary-foreground">{formatCurrency(periodView.spent, currency)}</span>
+                <span className="break-words font-bold tabular-nums text-secondary-foreground">{formatCurrency(periodView.spent, currency)}</span>
               </div>
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-muted text-secondary-foreground flex items-center justify-center">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="w-10 h-10 shrink-0 rounded-full bg-muted text-secondary-foreground flex items-center justify-center">
                     <DollarSign className="w-4 h-4" />
                   </div>
                   <div>
@@ -464,7 +464,7 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
                     <p className="text-xs text-muted-foreground">Difference from previous</p>
                   </div>
                 </div>
-                <span className={`font-bold ${isVariancePositive ? 'text-expense' : 'text-income'}`}>
+                <span className={`break-words font-bold tabular-nums ${isVariancePositive ? 'text-expense' : 'text-income'}`}>
                   {isVariancePositive ? '+' : ''}{formatCurrency(variance, currency)}
                 </span>
               </div>
