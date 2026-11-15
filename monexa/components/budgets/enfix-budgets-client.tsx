@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { formatCurrency } from "@/lib/utils";
-import { Carrot, Target, Wallet, Plus, AlertCircle, ShoppingBag, Car, GraduationCap, DollarSign, Shirt, Pencil, Trash2 } from "lucide-react";
+import { Carrot, Target, Wallet, Plus, AlertCircle, ShoppingBag, Car, GraduationCap, DollarSign, Shirt, Pencil, Trash2, ReceiptText } from "lucide-react";
 import { BarChart, Bar, XAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { BudgetForm } from "@/components/budgets/budget-form";
@@ -23,6 +23,15 @@ interface EnfixBudgetPeriodData {
   lastPeriodSpent: number;
   isOverBudget: boolean;
   chart: { month: string; fullMonth: string; spent: number; budget: number }[];
+  transactions: BudgetTransaction[];
+}
+
+interface BudgetTransaction {
+  id: string;
+  description: string;
+  amount: number;
+  date: Date;
+  notes: string | null;
 }
 
 interface EnfixBudgetCategoryData {
@@ -32,6 +41,7 @@ interface EnfixBudgetCategoryData {
   spentAmount: number;
   lastMonthSpent: number;
   isOverBudget: boolean;
+  transactions: BudgetTransaction[];
   category: {
     id: string;
     name: string;
@@ -117,6 +127,7 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
       lastPeriodSpent: selectedBudget.periods.weekly.lastPeriodSpent,
       isOverBudget: selectedBudget.periods.weekly.isOverBudget,
       history: selectedBudget.periods.weekly.chart,
+      transactions: selectedBudget.periods.weekly.transactions,
     }
     : activePeriod === "YEARLY"
     ? {
@@ -125,6 +136,7 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
       lastPeriodSpent: selectedBudget.periods.yearly.lastPeriodSpent,
       isOverBudget: selectedBudget.periods.yearly.isOverBudget,
       history: selectedBudget.periods.yearly.chart,
+      transactions: selectedBudget.periods.yearly.transactions,
     }
     : {
       totalBudget: selectedBudget.amount,
@@ -132,6 +144,7 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
       lastPeriodSpent: selectedBudget.lastMonthSpent,
       isOverBudget: selectedBudget.isOverBudget,
       history: selectedBudget.history,
+      transactions: selectedBudget.transactions,
     };
 
   const percent = Math.min(Math.round((periodView.spent / periodView.totalBudget) * 100) || 0, 100);
@@ -391,6 +404,59 @@ export function EnfixBudgetsClient({ budgets, currency, currentMonth, categories
             </span>
           </div>
         </div>
+
+        <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm" aria-labelledby="budget-transaction-history">
+          <div className="flex items-center justify-between gap-4 border-b border-border px-5 py-4 sm:px-6">
+            <div>
+              <h3 id="budget-transaction-history" className="text-lg font-bold text-foreground">Transaction history</h3>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Spending in {selectedBudget.category.name} for this {periodLabels.unit}
+              </p>
+            </div>
+            <span className="shrink-0 rounded-full bg-muted px-3 py-1 text-xs font-semibold tabular-nums text-muted-foreground">
+              {periodView.transactions.length} {periodView.transactions.length === 1 ? "transaction" : "transactions"}
+            </span>
+          </div>
+
+          {periodView.transactions.length === 0 ? (
+            <div className="flex flex-col items-center justify-center px-6 py-10 text-center">
+              <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+                <ReceiptText className="h-5 w-5" />
+              </div>
+              <p className="text-sm font-medium text-foreground">No spending in this {periodLabels.unit}</p>
+              <p className="mt-1 text-xs text-muted-foreground">Transactions assigned to this category will appear here.</p>
+            </div>
+          ) : (
+            <div className="max-h-80 divide-y divide-border/70 overflow-y-auto">
+              {periodView.transactions.map(transaction => {
+                const transactionDate = new Date(transaction.date);
+                return (
+                  <div key={transaction.id} className="flex items-center justify-between gap-4 px-5 py-4 sm:px-6">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-xl bg-expense-soft text-expense">
+                        <span className="text-[10px] font-semibold leading-none">
+                          {transactionDate.toLocaleDateString(undefined, { month: "short", timeZone: "UTC" })}
+                        </span>
+                        <span className="text-sm font-bold leading-tight tabular-nums">
+                          {transactionDate.toLocaleDateString(undefined, { day: "numeric", timeZone: "UTC" })}
+                        </span>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-foreground">{transaction.description}</p>
+                        <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                          {transaction.notes || transactionDate.toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" })}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="shrink-0 text-sm font-bold tabular-nums text-expense">
+                      -{formatCurrency(transaction.amount, currency)}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
 
         {/* Budget Period Chart & Comparative Analysis Row */}
         <div className="grid min-w-0 grid-cols-1 gap-6 2xl:grid-cols-2">

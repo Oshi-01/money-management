@@ -181,7 +181,8 @@ export async function getEnfixBudgetsData(monthStr: string) {
         type: "EXPENSE",
         categoryId: { in: categoryIds },
         date: { gte: queryStart, lte: queryEnd }
-      }
+      },
+      orderBy: [{ date: "desc" }, { createdAt: "desc" }],
     });
 
     // Fetch all budgets for the last 10 months for these categories
@@ -193,9 +194,19 @@ export async function getEnfixBudgetsData(monthStr: string) {
     });
 
     const resultBudgets = currentBudgets.map(budget => {
+      const toHistoryItem = (transaction: typeof transactions[number]) => ({
+        id: transaction.id,
+        description: transaction.description,
+        amount: transaction.amount,
+        date: transaction.date,
+        notes: transaction.notes,
+      });
+
       // Current month spending
-      const currentSpent = transactions
-        .filter(t => t.categoryId === budget.categoryId && t.date >= startDate && t.date <= endDate)
+      const currentMonthTransactions = transactions.filter(
+        t => t.categoryId === budget.categoryId && t.date >= startDate && t.date <= endDate
+      );
+      const currentSpent = currentMonthTransactions
         .reduce((sum, t) => sum + t.amount, 0);
 
       // Last month spending
@@ -241,6 +252,10 @@ export async function getEnfixBudgetsData(monthStr: string) {
       });
       const thisWeekSpent = weeklyChart[weeklyChart.length - 1].spent;
       const lastWeekSpent = weeklyChart[weeklyChart.length - 2].spent;
+      const currentWeek = weekRanges[weekRanges.length - 1];
+      const currentWeekTransactions = transactions.filter(
+        t => t.categoryId === budget.categoryId && t.date >= currentWeek.start && t.date <= currentWeek.end
+      );
 
       // --- Yearly view: sums actual months that have a budget set for that
       // calendar year; falls back to (monthly amount x 12) if none are set. ---
@@ -260,12 +275,18 @@ export async function getEnfixBudgetsData(monthStr: string) {
       });
       const thisYear = yearlyChart[yearlyChart.length - 1];
       const lastYear = yearlyChart[yearlyChart.length - 2];
+      const currentYearStart = new Date(year, 0, 1);
+      const currentYearEnd = new Date(year, 11, 31, 23, 59, 59, 999);
+      const currentYearTransactions = transactions.filter(
+        t => t.categoryId === budget.categoryId && t.date >= currentYearStart && t.date <= currentYearEnd
+      );
 
       return {
         ...budget,
         spentAmount: currentSpent,
         lastMonthSpent,
         isOverBudget: currentSpent > budget.amount,
+        transactions: currentMonthTransactions.map(toHistoryItem),
         history,
         periods: {
           weekly: {
@@ -274,6 +295,7 @@ export async function getEnfixBudgetsData(monthStr: string) {
             lastPeriodSpent: lastWeekSpent,
             isOverBudget: thisWeekSpent > weeklyBudgetAmount,
             chart: weeklyChart,
+            transactions: currentWeekTransactions.map(toHistoryItem),
           },
           yearly: {
             totalBudget: thisYear.budget,
@@ -281,6 +303,7 @@ export async function getEnfixBudgetsData(monthStr: string) {
             lastPeriodSpent: lastYear.spent,
             isOverBudget: thisYear.spent > thisYear.budget,
             chart: yearlyChart,
+            transactions: currentYearTransactions.map(toHistoryItem),
           },
         },
       };
